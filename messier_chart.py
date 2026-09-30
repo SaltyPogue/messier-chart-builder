@@ -1055,6 +1055,7 @@ class App:
         self.border_on = bool(self.settings.get("border", True))
         fw, fh = (CHART_W + 2 * BORDER, CHART_H + 2 * BORDER) if self.border_on else (CHART_W, CHART_H)
         w = int((h - 150) * fw / fh)
+        w = min(max(w, 960), self.root.winfo_screenwidth() - 40)   # room for the whole toolbar
         self.root.geometry(f"{w}x{h}")
         self.root.minsize(500, 520)
 
