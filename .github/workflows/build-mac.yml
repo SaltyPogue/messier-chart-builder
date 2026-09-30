@@ -1,0 +1,114 @@
+name: Build Mac app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            label: Apple Silicon
+            arch: AppleSilicon
+          - runner: macos-15-intel
+            label: Intel
+            arch: Intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Tk is available
+        run: python -c "import tkinter; r = tkinter.Tcl(); print('Tk OK', tkinter.TkVersion)"
+
+      - name: Install build tools
+        run: python -m pip install --upgrade pip pillow tkinterdnd2 pyinstaller
+
+      - name: Build the .app
+        run: |
+          pyinstaller --noconfirm --clean --windowed \
+            --name "Messier Chart Builder" \
+            --icon icon.icns \
+            --osx-bundle-identifier com.saltypogue.messierchartbuilder \
+            --add-data "saltypogue_logo.png:." \
+            --collect-all tkinterdnd2 \
+            messier_chart.py
+
+      - name: Smoke test (app starts and stays running)
+        run: |
+          APP="dist/Messier Chart Builder.app/Contents/MacOS/Messier Chart Builder"
+          "$APP" > app.log 2>&1 &
+          PID=$!
+          sleep 25
+          screencapture -x "screenshot-${{ matrix.arch }}.png" || true
+          if kill -0 $PID 2>/dev/null; then
+            echo "App is running"; kill $PID
+          else
+            echo "App exited early:"; cat app.log; exit 1
+          fi
+
+      - name: Zip the app
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent "dist/Messier Chart Builder.app" \
+            "Messier-Chart-Builder-Mac-${{ matrix.arch }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-${{ matrix.arch }}
+          path: Messier-Chart-Builder-Mac-${{ matrix.arch }}.zip
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshot-${{ matrix.arch }}
+          path: |
+            screenshot-${{ matrix.arch }}.png
+            app.log
+          if-no-files-found: ignore
+
+  release:
+    name: Publish download
+    needs: build
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mac-*
+          merge-multiple: true
+
+      - name: Check there is something to publish
+        run: ls -la *.zip
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-v${{ github.run_number }}
+          name: Messier Chart Builder for Mac (build ${{ github.run_number }})
+          make_latest: true
+          files: "*.zip"
+          body: |
+            **Messier Chart Builder** for Mac, created by SaltyPogue.
+
+            **Which file?**
+            - Mac with an Apple chip (M1, M2, M3, M4…, most Macs from late 2020 on): **Messier-Chart-Builder-Mac-AppleSilicon.zip**
+            - Older Mac with an Intel processor: **Messier-Chart-Builder-Mac-Intel.zip**
+
+            Not sure? Apple menu  → About This Mac → look at "Chip" or "Processor".
+
+            **Opening it the first time:** double-click the zip, drag **Messier Chart Builder** into Applications, then open it.
+            macOS will say it "cannot verify" the app because it isn't from the App Store. Click **Done**, open
+            **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to Messier Chart Builder.
+            You only need to do this once.
+
+            Follow SaltyPogue: [Instagram](https://www.instagram.com/saltypogue) · [Facebook](https://www.facebook.com/saltypogue) · [X](https://x.com/saltypogue)
