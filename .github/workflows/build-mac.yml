@@ -88,6 +88,24 @@ jobs:
           pattern: mac-*
           merge-multiple: true
 
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: screenshot-*
+          path: shots
+          merge-multiple: false
+
+      - name: Save test screenshots to the "build-screenshots" branch
+        continue-on-error: true
+        run: |
+          mkdir -p pub && find shots -type f \( -name '*.png' -o -name '*.log' \) -exec cp {} pub/ \; || true
+          [ -n "$(ls pub 2>/dev/null)" ] || exit 0
+          cd pub
+          git init -q -b build-screenshots
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A && git commit -qm "Screenshots from build ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-screenshots
+
       - name: Check there is something to publish
         run: ls -la *.zip
 
