@@ -69,6 +69,7 @@ CHART_W = COLS * CELL_W + (COLS + 1) * GAP
 CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP
 
 APP_NAME = "Messier Chart Builder"
+PREFIX = "M"
 AUTHOR = "SaltyPogue"
 SOCIAL_LINKS = [
     ("Instagram", "https://www.instagram.com/saltypogue"),
@@ -787,6 +788,35 @@ def import_photo(src, n):
         shutil.copy2(src, dest)
 
 
+HOVER_SIZE = 300
+_hover_cache = {}
+
+
+def hover_image(n):
+    """The whole photo for object n, fitted inside a HOVER_SIZE x HOVER_SIZE square."""
+    origs = originals_for(n)
+    src = origs[0] if origs else cell_path(n)
+    if not src.exists():
+        return None
+    key = (str(src), src.stat().st_mtime)
+    hit = _hover_cache.get(n)
+    if hit and hit[0] == key:
+        return hit[1]
+    try:
+        with Image.open(src) as im:
+            if im.format == "JPEG":
+                im.draft("RGB", (HOVER_SIZE * 2, HOVER_SIZE * 2))
+            im = ImageOps.exif_transpose(im)
+            im = to_rgb(im)
+            im.thumbnail((HOVER_SIZE, HOVER_SIZE), Image.LANCZOS)
+    except Exception:
+        return None
+    sq = Image.new("RGB", (HOVER_SIZE, HOVER_SIZE), (0, 0, 0))
+    sq.paste(im, ((HOVER_SIZE - im.width) // 2, (HOVER_SIZE - im.height) // 2))
+    _hover_cache[n] = (key, sq)
+    return sq
+
+
 def remove_photo(n):
     if cell_path(n).exists():
         cell_path(n).unlink()
@@ -1027,6 +1057,7 @@ class SpaceAnimator:
                 k = peak * (0.5 + 0.5 * math.sin(ph + self.t * sp)) ** 3
                 self.canvas.itemconfig(item, fill="#%02x%02x%02x" % tuple(int(c * k) for c in tint))
             self.canvas.tag_raise("hl")
+            self.canvas.tag_raise("hover")
         except tk.TclError:
             return
         self._job = self.canvas.after(self.TICK_MS, self.tick)
@@ -1094,13 +1125,17 @@ class App:
 
         self.chart = None
         self.preview_src = None
+        self._hover_n = None
+        self._hover_job = None
+        self._hover_photo = None
         self.bx = 0
         self.scale, self.ox, self.oy = 1.0, 0, 0
         self._resize_job = None
 
         self.canvas.bind("<Configure>", self._schedule_preview)
         self.canvas.bind("<Motion>", self.on_motion)
-        self.canvas.bind("<Leave>", lambda e: (self.highlight(None), self.status_var.set(self.default_status)))
+        self.canvas.bind("<Leave>", lambda e: (self.highlight(None), self.hide_hover(),
+                                               self.status_var.set(self.default_status)))
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<Button-3>", self.on_right_click)
         if sys.platform == "darwin":
@@ -1245,6 +1280,7 @@ class App:
         self.ox, self.oy = (cw - w) // 2, (ch - h) // 2
         self.anim.stop()
         self.photo = ImageTk.PhotoImage(src.resize((w, h), Image.LANCZOS))
+        self.hide_hover()
         self.canvas.delete("all")
         self.canvas.create_image(self.ox, self.oy, anchor="nw", image=self.photo)
         self.anim.start()
@@ -1270,9 +1306,60 @@ class App:
                                          outline="#4da3ff", width=3, tags="hl")
 
     # ---------- mouse ----------
+    # ---------- hover preview ----------
+    def schedule_hover(self, n, x, y):
+        self._hover_xy = (x, y)
+        if n != self._hover_n:
+            self.hide_hover()
+            self._hover_n = n
+            if n and cell_path(n).exists():
+                self._hover_job = self.root.after(350, lambda: self.show_hover(n))
+        elif self.canvas.find_withtag("hover"):
+            self.place_hover()
+
+    def hide_hover(self):
+        if self._hover_job:
+            self.root.after_cancel(self._hover_job)
+            self._hover_job = None
+        self.canvas.delete("hover")
+        self._hover_n = None
+
+    def show_hover(self, n):
+        self._hover_job = None
+        if n != self._hover_n:
+            return
+        im = hover_image(n)
+        if im is None:
+            return
+        self._hover_photo = ImageTk.PhotoImage(im)
+        c = self.canvas
+        c.delete("hover")
+        S, cap = HOVER_SIZE, 28
+        c.create_rectangle(0, 0, S + 8, S + cap + 8, fill="#0b0d16", outline="#4da3ff",
+                           width=2, tags=("hover", "hover_box"))
+        c.create_image(4, 4, anchor="nw", image=self._hover_photo, tags=("hover", "hover_img"))
+        c.create_text(S / 2 + 4, S + 4 + cap / 2, text=f"{PREFIX}{n}  ·  {NAMES[n]}",
+                      fill="white", font=("TkDefaultFont", 10, "bold"), tags=("hover", "hover_txt"))
+        self.place_hover()
+
+    def place_hover(self):
+        c = self.canvas
+        x, y = self._hover_xy
+        W, H = HOVER_SIZE + 8, HOVER_SIZE + 36
+        cw, ch = c.winfo_width(), c.winfo_height()
+        px = x + 22 if x + 22 + W <= cw else x - 22 - W
+        py = y + 22 if y + 22 + H <= ch else y - 22 - H
+        px = max(0, min(px, cw - W))
+        py = max(0, min(py, ch - H))
+        bx = c.coords("hover_box")
+        if bx:
+            c.move("hover", px - bx[0], py - bx[1])
+        c.tag_raise("hover")
+
     def on_motion(self, e):
         n = self.cell_at(e.x, e.y)
         self.highlight(n)
+        self.schedule_hover(n, e.x, e.y)
         if n:
             state = ("click to replace, right-click for options" if cell_path(n).exists()
                      else "empty — drop a photo here or click to choose one")
@@ -1281,11 +1368,13 @@ class App:
             self.status_var.set(self.default_status)
 
     def on_click(self, e):
+        self.hide_hover()
         n = self.cell_at(e.x, e.y)
         if n:
             self.choose_for(n)
 
     def on_right_click(self, e):
+        self.hide_hover()
         n = self.cell_at(e.x, e.y)
         if not n:
             return
@@ -1307,6 +1396,7 @@ class App:
                             e.y_root - self.canvas.winfo_rooty())
 
     def on_drop_position(self, e):
+        self.hide_hover()
         self.highlight(self._event_cell(e))
         return e.action
 
