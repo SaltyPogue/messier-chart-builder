@@ -38,9 +38,14 @@ jobs:
     runs-on: ${{ matrix.runner }}
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
-      ZIP_NAME: ${{ matrix.app }}-Chart-Builder-Mac-${{ matrix.arch }}.zip
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read the version number
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "ZIP_NAME=${{ matrix.app }}-Chart-Builder-$VERSION-Mac-${{ matrix.arch }}.zip" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v5
         with:
@@ -61,6 +66,15 @@ jobs:
             --add-data "saltypogue_logo.png:." \
             --collect-all tkinterdnd2 \
             "${{ matrix.script }}"
+
+      - name: Stamp the version number into the app
+        run: |
+          PLIST="dist/$APP_NAME.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$PLIST" || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $VERSION" "$PLIST"
+          codesign --force --deep --sign - "dist/$APP_NAME.app"
+          codesign --verify --deep "dist/$APP_NAME.app"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST"
 
       - name: Smoke test (app starts and stays running)
         run: |
@@ -94,10 +108,19 @@ jobs:
     needs: build
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the version number
+        run: echo "VERSION=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_ENV"
+
       - uses: actions/download-artifact@v4
         with:
           pattern: mac-*
+          path: out
           merge-multiple: true
 
       - uses: actions/download-artifact@v4
@@ -118,16 +141,21 @@ jobs:
           git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build-screenshots
 
       - name: Check there is something to publish
-        run: ls -la *.zip
+        run: ls -la out/*.zip
+
+      - name: Point the version tag at this build
+        continue-on-error: true
+        run: gh api -X PATCH "repos/$REPO/git/refs/tags/v$VERSION" -f sha="$GITHUB_SHA" -F force=true
 
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: mac-v${{ github.run_number }}
-          name: SaltyPogue Chart Builders for Mac (build ${{ github.run_number }})
+          tag_name: v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: SaltyPogue Chart Builders for Mac - Version ${{ env.VERSION }}
           make_latest: true
-          files: "*.zip"
+          files: "out/*.zip"
           body: |
-            **Messier, Caldwell and Sharpless Chart Builders** for Mac, created by SaltyPogue.
+            **Messier, Caldwell and Sharpless Chart Builders for Mac, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
 
             **Which file?** Pick the app you want, then the version for your Mac:
             - Mac with an Apple chip (M1, M2, M3, M4…, most Macs from late 2020 on): the file ending in **AppleSilicon.zip**
@@ -137,13 +165,21 @@ jobs:
 
             | App | Catalog | Apple chip | Intel |
             |---|---|---|---|
-            | Messier Chart Builder | 110 Messier objects | Messier-Chart-Builder-Mac-AppleSilicon.zip | Messier-Chart-Builder-Mac-Intel.zip |
-            | Caldwell Chart Builder | 109 Caldwell objects | Caldwell-Chart-Builder-Mac-AppleSilicon.zip | Caldwell-Chart-Builder-Mac-Intel.zip |
-            | Sharpless Chart Builder | 313 Sharpless nebulae | Sharpless-Chart-Builder-Mac-AppleSilicon.zip | Sharpless-Chart-Builder-Mac-Intel.zip |
+            | Messier Chart Builder ${{ env.VERSION }} | 110 Messier objects | Messier-Chart-Builder-${{ env.VERSION }}-Mac-AppleSilicon.zip | Messier-Chart-Builder-${{ env.VERSION }}-Mac-Intel.zip |
+            | Caldwell Chart Builder ${{ env.VERSION }} | 109 Caldwell objects | Caldwell-Chart-Builder-${{ env.VERSION }}-Mac-AppleSilicon.zip | Caldwell-Chart-Builder-${{ env.VERSION }}-Mac-Intel.zip |
+            | Sharpless Chart Builder ${{ env.VERSION }} | 313 Sharpless nebulae | Sharpless-Chart-Builder-${{ env.VERSION }}-Mac-AppleSilicon.zip | Sharpless-Chart-Builder-${{ env.VERSION }}-Mac-Intel.zip |
 
             **Opening an app the first time:** double-click the zip, drag the app into Applications, then open it.
             macOS will say it "cannot verify" the app because it isn't from the App Store. Click **Done**, open
             **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to the app's name.
             You only need to do this once per app.
 
-            Follow SaltyPogue: [Instagram](https://www.instagram.com/saltypogue) · [Facebook](https://www.facebook.com/saltypogue) · [X](https://x.com/saltypogue)
+            [www.saltypogue.com](https://www.saltypogue.com) · [Instagram](https://www.instagram.com/saltypogue) · [Facebook](https://www.facebook.com/saltypogue) · [X](https://x.com/saltypogue)
+
+      - name: Remove the older numbered test builds (mac-v1, mac-v2, ...)
+        continue-on-error: true
+        run: |
+          for tag in $(gh api "repos/$REPO/releases" --paginate --jq '.[].tag_name' | grep '^mac-v' || true); do
+            echo "Removing $tag"
+            gh release delete "$tag" --cleanup-tag --yes -R "$REPO"
+          done

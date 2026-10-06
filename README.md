@@ -1,6 +1,6 @@
 # SaltyPogue Chart Builders
 
-**Created by SaltyPogue** · [Instagram](https://www.instagram.com/saltypogue) · [Facebook](https://www.facebook.com/saltypogue) · [X](https://x.com/saltypogue)
+**Created by SaltyPogue** · [www.saltypogue.com](https://www.saltypogue.com) · [Instagram](https://www.instagram.com/saltypogue) · [Facebook](https://www.facebook.com/saltypogue) · [X](https://x.com/saltypogue)
 
 Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your photos onto the grid and the chart updates and saves itself after every photo.
 
@@ -12,7 +12,7 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 
 ## Download for Mac
 
-👉 **[Get the latest Mac versions](../../releases/latest)**
+👉 **[Get the Mac versions (Version 1.0)](../../releases/latest)**
 
 Pick the app you want, then the file for your Mac:
 

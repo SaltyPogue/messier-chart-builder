@@ -63,14 +63,19 @@ CELL_W, CELL_H = 256, 208
 GAP = 5                     # white grid lines
 TITLE_H = 240
 CHART_W = COLS * CELL_W + (COLS + 1) * GAP
-CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP
+FOOTER_H = 96                # strip under the grid with the website address
+CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP + FOOTER_H
 
 APP_NAME = "Sharpless Chart Builder"
 COUNT = 313
 PREFIX = "Sh2-"
 CATALOG = "Sharpless"
+APP_VERSION = "1.0"
 AUTHOR = "SaltyPogue"
+WEBSITE = "www.saltypogue.com"
+WEBSITE_URL = "https://www.saltypogue.com"
 SOCIAL_LINKS = [
+    (WEBSITE, WEBSITE_URL),
     ("Instagram", "https://www.instagram.com/saltypogue"),
     ("Facebook", "https://www.facebook.com/saltypogue"),
     ("X (Twitter)", "https://x.com/saltypogue"),
@@ -861,11 +866,16 @@ def load_tile(n):
     return tile
 
 
+WEBSITE_FONT = 60
+
+
 def render_chart(title):
     """Build the full-resolution chart image."""
     img = Image.new("RGB", (CHART_W, CHART_H), "black")
     d = ImageDraw.Draw(img)
-    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - 1], fill="white")
+    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - FOOTER_H - 1], fill="white")
+    d.text((CHART_W // 2, CHART_H - FOOTER_H // 2 + 4), WEBSITE, font=font("sans", WEBSITE_FONT),
+           fill=(205, 215, 240), anchor="mm")
 
     done = 0
     for n in range(1, COUNT + 1):
@@ -1274,7 +1284,7 @@ class App:
                           activeforeground="white", relief="flat", bd=0, padx=14, pady=6,
                           cursor="hand2", font=("TkDefaultFont", 10, "bold"))
             b.pack(side="left", padx=5)
-        tk.Label(win, text="@saltypogue", bg="white", fg="#888").pack(pady=(4, 0))
+        tk.Label(win, text=f"Version {APP_VERSION}  ·  @saltypogue", bg="white", fg="#888").pack(pady=(4, 0))
         Btn(win, text="Close", command=win.destroy, relief="flat", bd=0,
                   bg="#e6e6ec", activebackground="#d6d6de", padx=16, pady=4).pack(pady=(14, 20))
         win.bind("<Escape>", lambda e: win.destroy())
@@ -1394,11 +1404,24 @@ class App:
             c.move("hover", px - bx[0], py - bx[1])
         c.tag_raise("hover")
 
+    def website_at(self, cx, cy):
+        """True when the pointer is over the website address under the grid."""
+        if not self.scale:
+            return False
+        x = (cx - self.ox) / self.scale - self.bx
+        y = (cy - self.oy) / self.scale - self.bx
+        half = font("sans", WEBSITE_FONT).getlength(WEBSITE) / 2 + 30
+        return (CHART_H - FOOTER_H <= y <= CHART_H) and abs(x - CHART_W / 2) <= half
+
     def on_motion(self, e):
         n = self.cell_at(e.x, e.y)
         self.highlight(n)
         self.schedule_hover(n, e.x, e.y)
-        if n:
+        over_site = self.website_at(e.x, e.y)
+        self.canvas.config(cursor="hand2" if over_site else "")
+        if over_site:
+            self.status_var.set(f"Click to open {WEBSITE}")
+        elif n:
             state = ("click to replace, right-click for options" if cell_path(n).exists()
                      else "empty — drop a photo here or click to choose one")
             self.status_var.set(f"{PREFIX}{n}  ·  {NAMES[n]}  ·  {state}")
@@ -1407,6 +1430,9 @@ class App:
 
     def on_click(self, e):
         self.hide_hover()
+        if self.website_at(e.x, e.y):
+            webbrowser.open(WEBSITE_URL)
+            return
         n = self.cell_at(e.x, e.y)
         if n:
             self.choose_for(n)
