@@ -979,6 +979,111 @@ def frame_chart(inner):
     return img
 
 
+# --------------------------------------------------------------------------
+# Imaging log / notes (one small text file per object, next to its photo)
+# --------------------------------------------------------------------------
+LOG_FIELDS = [
+    ("date", "Date(s) captured"),
+    ("total", "Total exposure time"),
+    ("sub_length", "Sub length"),
+    ("sub_count", "Number of subs"),
+    ("gain", "Gain / ISO"),
+    ("telescope", "Telescope / lens"),
+    ("camera", "Camera"),
+    ("mount", "Mount"),
+    ("filters", "Filters"),
+    ("other", "Other equipment"),
+]
+EQUIPMENT_KEYS = ("gain", "telescope", "camera", "mount", "filters", "other")
+LOG_SUFFIX = "_log.txt"
+
+
+def log_path(n):
+    return ORIG_DIR / f"{PREFIX}{n}{LOG_SUFFIX}"
+
+
+def read_log(n):
+    """Read an object's log file back into {field: text, "notes": text}."""
+    data = {key: "" for key, _ in LOG_FIELDS}
+    data["notes"] = ""
+    path = log_path(n)
+    if not path.exists():
+        return data
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return data
+    labels = {label.lower(): key for key, label in LOG_FIELDS}
+    for i, line in enumerate(lines):
+        if line.strip().lower() == "notes:":
+            data["notes"] = "\n".join(lines[i + 1:]).strip("\n")
+            break
+        if ":" in line:
+            label, value = line.split(":", 1)
+            key = labels.get(label.strip().lower())
+            if key:
+                data[key] = value.strip()
+    return data
+
+
+def write_log(n, data):
+    """Save the log as a plain text file. An empty log removes the file."""
+    path = log_path(n)
+    if not any(str(v).strip() for v in data.values()):
+        if path.exists():
+            path.unlink()
+        return None
+    width = max(len(label) for _, label in LOG_FIELDS) + 1
+    out = [f"{PREFIX}{n} - {NAMES[n]}", f"Imaging log ({APP_NAME})", ""]
+    for key, label in LOG_FIELDS:
+        out.append(f"{(label + ':').ljust(width)} {data.get(key, '').strip()}".rstrip())
+    out += ["", "Notes:", data.get("notes", "").strip("\n"), ""]
+    path.write_text("\n".join(out), encoding="utf-8")
+    return path
+
+
+def log_summary(n):
+    """One short line for the hover preview, e.g. '2h 30m · 75 x 120s · gain 100'."""
+    if not log_path(n).exists():
+        return ""
+    d = read_log(n)
+    parts = []
+    if d["total"]:
+        parts.append(d["total"])
+    if d["sub_count"] and d["sub_length"]:
+        parts.append(f"{d['sub_count']} x {d['sub_length']}")
+    elif d["sub_length"]:
+        parts.append(f"subs {d['sub_length']}")
+    if d["gain"]:
+        parts.append(f"gain {d['gain']}")
+    text = "  ·  ".join(parts) or "Log / notes saved"
+    return text if len(text) <= 52 else text[:51] + "…"
+
+
+def total_exposure_text(sub_length, sub_count):
+    """'120' or '120s' or '2 min' times a count -> '2h 30m'. Returns '' if it can't tell."""
+    m = re.match(r"^\s*([\d.]+)\s*(s|sec|secs|second|seconds|m|min|mins|minute|minutes)?\s*$", sub_length, re.I)
+    c = re.match(r"^\s*(\d+)\s*$", sub_count)
+    if not m or not c:
+        return ""
+    try:
+        secs = float(m.group(1))
+    except ValueError:
+        return ""
+    if (m.group(2) or "s").lower().startswith("m"):
+        secs *= 60
+    total = round(secs * int(c.group(1)))
+    if total <= 0:
+        return ""
+    h, rem = divmod(total, 3600)
+    mins, sec = divmod(rem, 60)
+    if h:
+        return f"{h}h {mins:02d}m" if mins else f"{h}h"
+    if mins:
+        return f"{mins}m {sec:02d}s" if sec else f"{mins}m"
+    return f"{sec}s"
+
+
 def load_settings():
     try:
         return json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
@@ -1393,18 +1498,23 @@ class App:
         self._hover_photo = ImageTk.PhotoImage(im)
         c = self.canvas
         c.delete("hover")
-        S, cap = HOVER_SIZE, 28
+        summary = log_summary(n)
+        S, cap = HOVER_SIZE, 28 + (20 if summary else 0)
+        self._hover_h = S + cap + 8
         c.create_rectangle(0, 0, S + 8, S + cap + 8, fill="#0b0d16", outline="#4da3ff",
                            width=2, tags=("hover", "hover_box"))
         c.create_image(4, 4, anchor="nw", image=self._hover_photo, tags=("hover", "hover_img"))
-        c.create_text(S / 2 + 4, S + 4 + cap / 2, text=f"{PREFIX}{n}  ·  {NAMES[n]}",
+        c.create_text(S / 2 + 4, S + 4 + 14, text=f"{PREFIX}{n}  ·  {NAMES[n]}",
                       fill="white", font=("TkDefaultFont", 10, "bold"), tags=("hover", "hover_txt"))
+        if summary:
+            c.create_text(S / 2 + 4, S + 4 + 35, text=summary, fill="#9fc4ff",
+                          font=("TkDefaultFont", 9), tags=("hover", "hover_log"))
         self.place_hover()
 
     def place_hover(self):
         c = self.canvas
         x, y = self._hover_xy
-        W, H = HOVER_SIZE + 8, HOVER_SIZE + 36
+        W, H = HOVER_SIZE + 8, getattr(self, "_hover_h", HOVER_SIZE + 36)
         cw, ch = c.winfo_width(), c.winfo_height()
         px = x + 22 if x + 22 + W <= cw else x - 22 - W
         py = y + 22 if y + 22 + H <= ch else y - 22 - H
@@ -1461,6 +1571,9 @@ class App:
         origs = originals_for(n)
         m.add_command(label="Open original", state="normal" if origs else "disabled",
                       command=lambda: open_path(origs[0]))
+        m.add_command(label="Edit log / notes…" if log_path(n).exists() else "Add log / notes…",
+                      state="normal" if (has or log_path(n).exists()) else "disabled",
+                      command=lambda: self.edit_log(n))
         m.add_command(label="Remove photo", state="normal" if has else "disabled",
                       command=lambda: self.remove(n))
         m.tk_popup(e.x_root, e.y_root)
@@ -1567,6 +1680,106 @@ class App:
             self.rebuild()
             self.status_var.set(f"Removed {PREFIX}{n}.")
 
+    def edit_log(self, n):
+        self.hide_hover()
+        path = log_path(n)
+        is_new = not path.exists()
+        data = read_log(n)
+        last = self.settings.get("last_equipment", {}) if is_new else {}
+        for k in EQUIPMENT_KEYS:
+            if is_new and last.get(k):
+                data[k] = last[k]
+
+        BG = "#f4f4f7"
+        win = tk.Toplevel(self.root)
+        win.title(f"Log / notes — {PREFIX}{n}")
+        win.configure(bg=BG)
+        win.transient(self.root)
+        win.resizable(False, False)
+
+        tk.Label(win, text=f"{PREFIX}{n}  ·  {NAMES[n]}", bg=BG, fg="#111",
+                 font=("TkDefaultFont", 14, "bold")).pack(anchor="w", padx=18, pady=(14, 0))
+        hint = "Fill in whatever you like - every box is optional."
+        if is_new and any(last.get(k) for k in EQUIPMENT_KEYS):
+            hint = "Equipment is filled in from your last log. Change anything that differs."
+        tk.Label(win, text=hint, bg=BG, fg="#666").pack(anchor="w", padx=18, pady=(2, 8))
+
+        form = tk.Frame(win, bg=BG)
+        form.pack(padx=18, fill="x")
+        variables, entries = {}, {}
+        for row, (key, label) in enumerate(LOG_FIELDS):
+            if key == "telescope":
+                tk.Label(form, text="Equipment", bg=BG, fg="#2f35b8",
+                         font=("TkDefaultFont", 10, "bold")).grid(row=row + 100, column=0, columnspan=2,
+                                                                 sticky="w", pady=(10, 2))
+            r = row + (101 if key in ("telescope", "camera", "mount", "filters", "other") else 0)
+            tk.Label(form, text=label, bg=BG, fg="#222", anchor="w").grid(row=r, column=0, sticky="w", pady=3)
+            var = tk.StringVar(value=data.get(key, ""))
+            ent = tk.Entry(form, textvariable=var, width=46, relief="solid", bd=1)
+            ent.grid(row=r, column=1, sticky="we", padx=(12, 0), pady=3, ipady=2)
+            variables[key], entries[key] = var, ent
+        form.columnconfigure(1, weight=1)
+
+        def fill_total(_e=None):
+            if not variables["total"].get().strip():
+                text = total_exposure_text(variables["sub_length"].get(), variables["sub_count"].get())
+                if text:
+                    variables["total"].set(text)
+        entries["sub_length"].bind("<FocusOut>", fill_total)
+        entries["sub_count"].bind("<FocusOut>", fill_total)
+
+        tk.Label(win, text="Notes", bg=BG, fg="#2f35b8",
+                 font=("TkDefaultFont", 10, "bold")).pack(anchor="w", padx=18, pady=(12, 2))
+        box = tk.Frame(win, bg=BG)
+        box.pack(padx=18, fill="both")
+        notes = tk.Text(box, width=58, height=8, wrap="word", relief="solid", bd=1,
+                        font=("TkDefaultFont", 10), undo=True)
+        scroll = tk.Scrollbar(box, command=notes.yview)
+        notes.configure(yscrollcommand=scroll.set)
+        notes.pack(side="left", fill="both", expand=True)
+        scroll.pack(side="right", fill="y")
+        notes.insert("1.0", data.get("notes", ""))
+
+        tk.Label(win, text=f"Saved as a text file next to the photo:\n{path}", bg=BG, fg="#777",
+                 justify="left", wraplength=470).pack(anchor="w", padx=18, pady=(10, 0))
+
+        def save(_e=None):
+            fill_total()
+            new = {key: variables[key].get().strip() for key, _ in LOG_FIELDS}
+            new["notes"] = notes.get("1.0", "end").strip("\n")
+            try:
+                saved = write_log(n, new)
+            except OSError as ex:
+                messagebox.showerror("Couldn't save the log", str(ex), parent=win)
+                return
+            equipment = {k: new[k] for k in EQUIPMENT_KEYS if new[k]}
+            if equipment:
+                self.settings["last_equipment"] = equipment
+                save_settings(self.settings)
+            win.destroy()
+            self.status_var.set(f"Log saved for {PREFIX}{n}: {saved}" if saved
+                                else f"Log for {PREFIX}{n} was empty, so nothing was saved.")
+
+        row = tk.Frame(win, bg=BG)
+        row.pack(fill="x", padx=18, pady=(12, 16))
+        Btn(row, text="Save", command=save, bg="#2f35b8", fg="white", activebackground="#4148d6",
+            activeforeground="white", relief="flat", bd=0, padx=20, pady=6,
+            font=("TkDefaultFont", 10, "bold")).pack(side="right")
+        Btn(row, text="Cancel", command=win.destroy, bg="#dcdce4", fg="#111", activebackground="#cdcdd8",
+            relief="flat", bd=0, padx=16, pady=6).pack(side="right", padx=8)
+        Btn(row, text="Open folder", command=lambda: open_path(ORIG_DIR), bg="#dcdce4", fg="#111",
+            activebackground="#cdcdd8", relief="flat", bd=0, padx=12, pady=6).pack(side="left")
+
+        win.bind("<Escape>", lambda e: win.destroy())
+        win.bind("<Command-s>" if IS_MAC else "<Control-s>", save)
+        win.update_idletasks()
+        x = self.root.winfo_rootx() + (self.root.winfo_width() - win.winfo_width()) // 2
+        y = self.root.winfo_rooty() + max(0, (self.root.winfo_height() - win.winfo_height()) // 3)
+        win.geometry(f"+{max(0, x)}+{max(0, y)}")
+        win.grab_set()
+        entries["date"].focus_set()
+        self._log_win = win
+
     def clear_all(self):
         filled = [n for n in range(1, COUNT + 1) if cell_path(n).exists()]
         if not filled:
@@ -1575,13 +1788,14 @@ class App:
         if not messagebox.askyesno(
                 "Clear all photos?",
                 f"Remove all {len(filled)} photos from the chart and start over?\n\n"
-                "Your original photo files are not touched - only the app's copies are removed.",
+                "Your original photo files are not touched - only the app's copies are removed.\n"
+                "Any logs / notes you saved are kept.",
                 icon="warning"):
             return
         for n in filled:
             remove_photo(n)
         for p in ORIG_DIR.iterdir():
-            if p.is_file():
+            if p.is_file() and not p.name.endswith(LOG_SUFFIX):
                 p.unlink()
         self.rebuild()
         self.status_var.set("Chart cleared.")

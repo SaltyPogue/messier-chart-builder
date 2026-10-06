@@ -37,6 +37,7 @@ You only need to do this once per app.
   - Sharpless: `Sh2-155.jpg`, `Sharpless 155.png`, or a matching NGC/IC/Messier number such as `IC 1805.jpg`
 - **Click** a square to pick a photo for it. **Right-click** (or Control-click) to replace or remove it.
 - **Rest the mouse on a photo** to see a larger preview.
+- **Right-click a photo → Add log / notes…** to record your dates, total exposure, sub length and count, gain, equipment and your own notes. Each log is saved as a plain text file next to that photo (for example `M31_log.txt`), and a one-line summary shows in the hover preview.
 - **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`).
 - **Edit title…**, **Clear all…** and **Star border: On/Off** are in the toolbar.
 
