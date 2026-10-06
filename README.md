@@ -10,18 +10,26 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 | **Caldwell Chart Builder** | The 109 Caldwell objects (C1–C109) |
 | **Sharpless Chart Builder** | The 313 Sharpless nebulae (Sh2-1 to Sh2-313) |
 
-## Download for Mac
+## Download
 
-👉 **[Get the Mac versions (Version 1.0)](../../releases/latest)**
+👉 **[All downloads (latest version)](../../releases/latest)**
 
-Pick the app you want, then the file for your Mac:
+| App | Windows | Mac (Apple chip) | Mac (Intel) |
+|---|---|---|---|
+| **Messier** | [messier-chart-builder.exe](../../releases/latest/download/messier-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/messier-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/messier-chart-builder-mac-intel.zip) |
+| **Caldwell** | [caldwell-chart-builder.exe](../../releases/latest/download/caldwell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/caldwell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/caldwell-chart-builder-mac-intel.zip) |
+| **Sharpless** | [sharpless-chart-builder.exe](../../releases/latest/download/sharpless-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/sharpless-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/sharpless-chart-builder-mac-intel.zip) |
 
-- **Apple chip (M1, M2, M3, M4…)**, most Macs from late 2020 on: the file ending in `AppleSilicon.zip`
-- **Intel Mac**: the file ending in `Intel.zip`
+### Windows
+
+Download the `.exe` and double-click it. Windows may show "Windows protected your PC", because the app isn't from the Microsoft Store: click **More info**, then **Run anyway**.
+
+### Mac
+
+- **Apple chip (M1, M2, M3, M4…)**, most Macs from late 2020 on: the `apple-silicon` file
+- **Intel Mac**: the `intel` file
 
 Not sure which you have? Apple menu  → **About This Mac** → look at **Chip** or **Processor**.
-
-### Opening an app the first time
 
 1. Double-click the downloaded zip, then drag the app into your **Applications** folder.
 2. Open it. macOS will say it can't verify the app, because it isn't from the App Store. Click **Done**.
