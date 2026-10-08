@@ -61,7 +61,9 @@ CELL_W, CELL_H = 320, 260
 GAP = 5                     # white grid lines
 TITLE_H = 240
 CHART_W = COLS * CELL_W + (COLS + 1) * GAP
-CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP
+FOOTER_H = max(170, CHART_W * 2 // 45)   # strip under the grid with a short description of the catalog
+CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP + FOOTER_H
+CATALOG_DESCRIPTION = ("The Caldwell Catalogue: 109 bright deep-sky objects chosen by Sir Patrick Moore in 1995 as a companion to the Messier list, including many southern-sky targets that Messier never saw. It is named after Moore's full surname, Caldwell-Moore.")
 
 APP_NAME = "Caldwell Chart Builder"
 COUNT = 109
@@ -1144,11 +1146,34 @@ def load_tile(n):
 
 
 
+def draw_description(d):
+    """Write the catalog description, word-wrapped and centred, in the strip under the grid."""
+    max_w = CHART_W - 240
+    for size in range(max(40, CHART_W // 80), 23, -4):
+        f = font("sans", size)
+        lines, line = [], ""
+        for word in CATALOG_DESCRIPTION.split():
+            trial = f"{line} {word}".strip()
+            if d.textlength(trial, font=f) <= max_w or not line:
+                line = trial
+            else:
+                lines.append(line)
+                line = word
+        lines.append(line)
+        step = size + 12
+        if len(lines) * step <= FOOTER_H - 30:
+            break
+    top = CHART_H - FOOTER_H + (FOOTER_H - len(lines) * step) // 2 + step // 2
+    for i, text in enumerate(lines):
+        d.text((CHART_W // 2, top + i * step), text, font=f, fill=(185, 192, 212), anchor="mm")
+
+
 def render_chart(title):
     """Build the full-resolution chart image."""
     img = Image.new("RGB", (CHART_W, CHART_H), "black")
     d = ImageDraw.Draw(img)
-    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - 1], fill="white")
+    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - FOOTER_H - 1], fill="white")
+    draw_description(d)
 
     done = 0
     for n in range(1, COUNT + 1):
