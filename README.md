@@ -9,7 +9,7 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 | **Messier Chart Builder** | The 110 Messier objects (M1–M110) |
 | **Caldwell Chart Builder** | The 109 Caldwell objects (C1–C109) |
 | **Sharpless Chart Builder** | The 313 Sharpless nebulae (Sh2-1 to Sh2-313) |
-| **Herschel 400 Chart Builder** | The 400 objects on the Astronomical League's Herschel 400 list |
+| **Herschel Chart Builder** | The 400 Herschel objects (the Astronomical League's Herschel 400 list) |
 | **Barnard Chart Builder** | Barnard's dark nebulae (B1–B175 and B201–B370) |
 | **Abell Chart Builder** | The 86 Abell planetary nebulae (Abell 1–86) |
 
@@ -22,7 +22,7 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 | **Messier** | [messier-chart-builder.exe](../../releases/latest/download/messier-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/messier-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/messier-chart-builder-mac-intel.zip) |
 | **Caldwell** | [caldwell-chart-builder.exe](../../releases/latest/download/caldwell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/caldwell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/caldwell-chart-builder-mac-intel.zip) |
 | **Sharpless** | [sharpless-chart-builder.exe](../../releases/latest/download/sharpless-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/sharpless-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/sharpless-chart-builder-mac-intel.zip) |
-| **Herschel 400** | [herschel-400-chart-builder.exe](../../releases/latest/download/herschel-400-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/herschel-400-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/herschel-400-chart-builder-mac-intel.zip) |
+| **Herschel** | [herschel-chart-builder.exe](../../releases/latest/download/herschel-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/herschel-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/herschel-chart-builder-mac-intel.zip) |
 | **Barnard** | [barnard-chart-builder.exe](../../releases/latest/download/barnard-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/barnard-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/barnard-chart-builder-mac-intel.zip) |
 | **Abell** | [abell-chart-builder.exe](../../releases/latest/download/abell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/abell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/abell-chart-builder-mac-intel.zip) |
 
@@ -49,13 +49,13 @@ You only need to do this once per app.
   - Messier: `M31.jpg`, `Messier 81.png`
   - Caldwell: `C20.jpg`, `Caldwell 49.tif`, or the NGC/IC number such as `NGC 7000.jpg`
   - Sharpless: `Sh2-155.jpg`, `Sharpless 155.png`, or a matching NGC/IC/Messier number such as `IC 1805.jpg`
-  - Herschel 400: `NGC 891.jpg`, `ngc7814.png`, or the Messier/Caldwell number of a list object such as `M33.jpg` or `C23.jpg`
+  - Herschel: `NGC 891.jpg`, `ngc7814.png`, or the Messier/Caldwell number of a list object such as `M33.jpg` or `C23.jpg`
   - Barnard: `B33.jpg`, `Barnard 72.png`, or a well-known name such as `Horsehead.jpg`
   - Abell: `Abell 21.jpg`, `A39.png`, `PN A66 31.tif`, or another designation such as `NGC 6742.jpg`
 - **Click** a square to pick a photo for it. **Right-click** (or Control-click) to replace or remove it.
 - **Rest the mouse on a photo** to see a larger preview.
 - **Right-click a photo → Add log / notes…** to record your dates, total exposure, sub length and count, gain, equipment and your own notes. Each log is saved as a plain text file next to that photo (for example `M31_log.txt`), and a one-line summary shows in the hover preview.
-- **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel 400 Chart`, `Barnard Chart`, `Abell Chart`).
+- **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel Chart`, `Barnard Chart`, `Abell Chart`).
 - **Edit title…**, **Clear all…** and **Star border: On/Off** are in the toolbar.
 
 Your original photos are never changed. The apps work from copies.

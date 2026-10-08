@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [Messier, Caldwell, Sharpless, "Herschel 400", Barnard, Abell]
+        app: [Messier, Caldwell, Sharpless, Herschel, Barnard, Abell]
         runner: [macos-14, macos-15-intel]
         include:
           - runner: macos-14
@@ -40,11 +40,11 @@ jobs:
             script: sharpless_chart.py
             icon: sharpless_icon.icns
             bundle: com.saltypogue.sharplesschartbuilder
-          - app: Herschel 400
-            slug: herschel-400-chart-builder
-            script: herschel400_chart.py
+          - app: Herschel
+            slug: herschel-chart-builder
+            script: herschel_chart.py
             icon: herschel_icon.icns
-            bundle: com.saltypogue.herschel400chartbuilder
+            bundle: com.saltypogue.herschelchartbuilder
           - app: Barnard
             slug: barnard-chart-builder
             script: barnard_chart.py
@@ -141,9 +141,9 @@ jobs:
             slug: sharpless-chart-builder
             script: sharpless_chart.py
             icon: sharpless_icon.ico
-          - app: Herschel 400
-            slug: herschel-400-chart-builder
-            script: herschel400_chart.py
+          - app: Herschel
+            slug: herschel-chart-builder
+            script: herschel_chart.py
             icon: herschel_icon.ico
           - app: Barnard
             slug: barnard-chart-builder
@@ -266,14 +266,14 @@ jobs:
             out/*.zip
             out/*.exe
           body: |
-            **Messier, Caldwell, Sharpless, Herschel 400, Barnard and Abell Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
+            **Messier, Caldwell, Sharpless, Herschel, Barnard and Abell Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
 
             | App | Windows | Mac (Apple chip) | Mac (Intel) |
             |---|---|---|---|
             | **Messier** · 110 objects | messier-chart-builder.exe | messier-chart-builder-mac-apple-silicon.zip | messier-chart-builder-mac-intel.zip |
             | **Caldwell** · 109 objects | caldwell-chart-builder.exe | caldwell-chart-builder-mac-apple-silicon.zip | caldwell-chart-builder-mac-intel.zip |
             | **Sharpless** · 313 nebulae | sharpless-chart-builder.exe | sharpless-chart-builder-mac-apple-silicon.zip | sharpless-chart-builder-mac-intel.zip |
-            | **Herschel 400** · 400 objects | herschel-400-chart-builder.exe | herschel-400-chart-builder-mac-apple-silicon.zip | herschel-400-chart-builder-mac-intel.zip |
+            | **Herschel** · 400 objects | herschel-chart-builder.exe | herschel-chart-builder-mac-apple-silicon.zip | herschel-chart-builder-mac-intel.zip |
             | **Barnard** · 345 dark nebulae | barnard-chart-builder.exe | barnard-chart-builder-mac-apple-silicon.zip | barnard-chart-builder-mac-intel.zip |
             | **Abell** · 86 planetary nebulae | abell-chart-builder.exe | abell-chart-builder-mac-apple-silicon.zip | abell-chart-builder-mac-intel.zip |
 

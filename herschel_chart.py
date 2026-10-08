@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """
-Herschel 400 Chart Builder
+Herschel Chart Builder
 ==========================
 Created by SaltyPogue  ·  www.saltypogue.com
 
-A desktop app for building a chart of the 400 Herschel 400 objects from your
+A desktop app for building a chart of the 400 Herschel objects from your
 own astrophotos.
 
   * Drag photos onto the window.
       - If a file name contains the NGC number (NGC 891.jpg, ngc7814.tif) - or the
-        Messier / Caldwell number of a Herschel 400 object (M33.jpg, C23.jpg) - it goes
+        Messier / Caldwell number of a Herschel object (M33.jpg, C23.jpg) - it goes
         to that object automatically.
         You can drop many files, or a whole folder.
       - Otherwise it goes into the square you dropped it on.
   * Click a square to choose a photo for it. Right-click for more options.
   * Rest the mouse on a photo for a larger preview.
-  * After every change the chart is re-saved to ~/Herschel 400 Chart/herschel400_chart.png.
+  * After every change the chart is re-saved to ~/Herschel Chart/herschel_chart.png.
 
-Your photos are copied into ~/Herschel 400 Chart/originals; your originals are never
+Your photos are copied into ~/Herschel Chart/originals; your originals are never
 modified or moved.
 
 Requirements:  pip install pillow tkinterdnd2
@@ -52,11 +52,11 @@ Image.MAX_IMAGE_PIXELS = None  # large mosaics are fine
 # --------------------------------------------------------------------------
 # Locations and layout
 # --------------------------------------------------------------------------
-LIBRARY = Path.home() / "Herschel 400 Chart"
+LIBRARY = Path.home() / "Herschel Chart"
 ORIG_DIR = LIBRARY / "originals"
 CELL_DIR = LIBRARY / "cells"
 SETTINGS_FILE = LIBRARY / "settings.json"
-CHART_FILE = LIBRARY / "herschel400_chart.png"
+CHART_FILE = LIBRARY / "herschel_chart.png"
 
 COLS, ROWS = 20, 20
 CELL_W, CELL_H = 256, 208
@@ -65,12 +65,12 @@ TITLE_H = 240
 CHART_W = COLS * CELL_W + (COLS + 1) * GAP
 FOOTER_H = max(170, CHART_W * 2 // 45)   # strip under the grid with a short description of the catalog
 CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP + FOOTER_H
-CATALOG_DESCRIPTION = ('The Herschel 400: 400 deep-sky objects chosen in 1980 by members of the Ancient City Astronomy Club from the roughly 2,500 discovered by William and Caroline Herschel. The Astronomical League adopted it as the next observing challenge after the Messier list.')
+CATALOG_DESCRIPTION = ('The Herschel Catalog: 400 deep-sky objects chosen in 1980 by members of the Ancient City Astronomy Club from the roughly 2,500 discovered by William and Caroline Herschel. The Astronomical League adopted it as its Herschel 400 observing challenge, the next step after the Messier list.')
 
-APP_NAME = "Herschel 400 Chart Builder"
+APP_NAME = "Herschel Chart Builder"
 COUNT = 400
 PREFIX = "NGC "
-CATALOG = "Herschel 400"
+CATALOG = "Herschel"
 APP_VERSION = "1.0"
 AUTHOR = "SaltyPogue"
 WEBSITE = "www.saltypogue.com"
@@ -1285,7 +1285,7 @@ INDEX = {ngc: i for i, ngc in enumerate(IDS) if ngc}
 INDEX[650] = INDEX[651]          # the Little Dumbbell is listed as both NGC 650 and NGC 651
 NUMBER_WORD = "NGC number"
 
-# Messier and Caldwell numbers of Herschel 400 objects, so "M33.jpg" or "C23.jpg" work too
+# Messier and Caldwell numbers of Herschel objects, so "M33.jpg" or "C23.jpg" work too
 MESSIER_TO_NGC = {33: 598, 76: 651, 20: 6514, 47: 2422, 82: 3034, 104: 4594}
 CALDWELL_TO_NGC = {"2": 40, "6": 6543, "7": 2403, "8": 559, "10": 663, "12": 6946, "13": 457, "14": 869, "15": 6826, "16": 7243, "18": 185, "20": 7000, "21": 4449, "22": 7662, "23": 891, "25": 2419, "28": 752, "29": 5005, "30": 7331, "32": 4631, "36": 4559, "37": 6885, "38": 4565, "39": 2392, "40": 3626, "42": 7006, "43": 7814, "44": 7479, "45": 5248, "47": 6934, "48": 2775, "50": 2244, "52": 4697, "53": 3115, "54": 2506, "55": 7009, "56": 246, "58": 2360, "59": 3242, "60": 4038, "62": 247, "64": 2362, "65": 253, "66": 5694}
 CALDWELL_TO_NGC = {int(k): v for k, v in CALDWELL_TO_NGC.items()}
@@ -1527,7 +1527,7 @@ def render_chart(title):
 
     d.text((CHART_W // 2, int(TITLE_H * 0.44)), title, font=font("title", 140),
            fill="white", anchor="mm")
-    d.text((CHART_W // 2, int(TITLE_H * 0.84)), f"{done} of {COUNT} objects on the Herschel 400 list",
+    d.text((CHART_W // 2, int(TITLE_H * 0.84)), f"{done} of {COUNT} Herschel objects",
            font=font("sans", 32), fill=(150, 150, 165), anchor="mm")
     return img, done
 
@@ -1686,7 +1686,7 @@ def load_settings():
     try:
         return json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
     except Exception:
-        return {"title": "My Herschel 400 Chart"}
+        return {"title": "My Herschel Chart"}
 
 
 def save_settings(s):
@@ -2006,7 +2006,7 @@ class App:
                  font=("TkDefaultFont", 16, "bold")).pack()
         tk.Label(win, text=f"Created by {AUTHOR}", bg="white", fg="#2f35b8",
                  font=("TkDefaultFont", 12, "bold")).pack(pady=(2, 4))
-        tk.Label(win, text=f"Build a chart of all {COUNT} objects on the Herschel 400 list from your own astrophotos.",
+        tk.Label(win, text=f"Build a chart of all {COUNT} Herschel objects from your own astrophotos.",
                  bg="white", fg="#555").pack(padx=20)
         row = tk.Frame(win, bg="white")
         row.pack(pady=(14, 6))
@@ -2028,7 +2028,7 @@ class App:
 
     # ---------- chart / preview ----------
     def rebuild(self):
-        inner, done = render_chart(self.settings.get("title", "My Herschel 400 Chart"))
+        inner, done = render_chart(self.settings.get("title", "My Herschel Chart"))
         if self.border_on:
             self.chart = self.preview_src = frame_chart(inner)
             self.bx = BORDER
@@ -2219,7 +2219,7 @@ class App:
                 if n is None and single:
                     n = target or self.ask_number(f)
                 if n is None:
-                    skipped.append(f"{f.name}: no NGC number from the Herschel 400 list in the file name")
+                    skipped.append(f"{f.name}: no NGC number from the Herschel list in the file name")
                     continue
                 if single and cell_path(n).exists() and not messagebox.askyesno(
                         "Replace photo?", f"{LABEL[n]} already has a photo. Replace it with {f.name}?"):
@@ -2274,7 +2274,7 @@ class App:
 
     def add_photos(self):
         files = filedialog.askopenfilenames(
-            title="Add Herschel 400 photos (name them like NGC 891.jpg)",
+            title="Add Herschel photos (name them like NGC 891.jpg)",
             filetypes=[("Images", " ".join(f"*{x}" for x in sorted(IMAGE_EXT))), ("All files", "*.*")])
         if files:
             self.import_files(files)
@@ -2416,7 +2416,7 @@ class App:
 
     def export(self):
         f = filedialog.asksaveasfilename(
-            title="Export chart", defaultextension=".png", initialfile="herschel400_chart.png",
+            title="Export chart", defaultextension=".png", initialfile="herschel_chart.png",
             filetypes=[("PNG", "*.png"), ("JPEG", "*.jpg"), ("TIFF", "*.tif")])
         if not f:
             return
