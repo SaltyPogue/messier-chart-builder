@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [Messier, Caldwell, Sharpless, Herschel, Barnard, Abell]
+        app: [Messier, Caldwell, Sharpless, Herschel, Barnard, Abell, vdB]
         runner: [macos-14, macos-15-intel]
         include:
           - runner: macos-14
@@ -55,6 +55,11 @@ jobs:
             script: abell_chart.py
             icon: abell_icon.icns
             bundle: com.saltypogue.abellchartbuilder
+          - app: vdB
+            slug: vdb-chart-builder
+            script: vdb_chart.py
+            icon: vdb_icon.icns
+            bundle: com.saltypogue.vdbchartbuilder
     runs-on: ${{ matrix.runner }}
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
@@ -153,6 +158,10 @@ jobs:
             slug: abell-chart-builder
             script: abell_chart.py
             icon: abell_icon.ico
+          - app: vdB
+            slug: vdb-chart-builder
+            script: vdb_chart.py
+            icon: vdb_icon.ico
     runs-on: windows-latest
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
@@ -266,7 +275,7 @@ jobs:
             out/*.zip
             out/*.exe
           body: |
-            **Messier, Caldwell, Sharpless, Herschel, Barnard and Abell Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
+            **Messier, Caldwell, Sharpless, Herschel, Barnard, Abell and vdB Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
 
             | App | Windows | Mac (Apple chip) | Mac (Intel) |
             |---|---|---|---|
@@ -276,6 +285,7 @@ jobs:
             | **Herschel** · 400 objects | herschel-chart-builder.exe | herschel-chart-builder-mac-apple-silicon.zip | herschel-chart-builder-mac-intel.zip |
             | **Barnard** · 345 dark nebulae | barnard-chart-builder.exe | barnard-chart-builder-mac-apple-silicon.zip | barnard-chart-builder-mac-intel.zip |
             | **Abell** · 86 planetary nebulae | abell-chart-builder.exe | abell-chart-builder-mac-apple-silicon.zip | abell-chart-builder-mac-intel.zip |
+            | **vdB** · 158 reflection nebulae | vdb-chart-builder.exe | vdb-chart-builder-mac-apple-silicon.zip | vdb-chart-builder-mac-intel.zip |
 
             **Windows:** download the .exe and double-click it. Windows may show "Windows protected your PC" because the app
             isn't from the Microsoft Store: click **More info**, then **Run anyway**.

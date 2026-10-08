@@ -12,6 +12,7 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 | **Herschel Chart Builder** | The 400 Herschel objects (the Astronomical League's Herschel 400 list) |
 | **Barnard Chart Builder** | Barnard's dark nebulae (B1–B175 and B201–B370) |
 | **Abell Chart Builder** | The 86 Abell planetary nebulae (Abell 1–86) |
+| **vdB Chart Builder** | The 158 van den Bergh reflection nebulae (vdB 1–158) |
 
 ## Download
 
@@ -25,6 +26,7 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 | **Herschel** | [herschel-chart-builder.exe](../../releases/latest/download/herschel-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/herschel-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/herschel-chart-builder-mac-intel.zip) |
 | **Barnard** | [barnard-chart-builder.exe](../../releases/latest/download/barnard-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/barnard-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/barnard-chart-builder-mac-intel.zip) |
 | **Abell** | [abell-chart-builder.exe](../../releases/latest/download/abell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/abell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/abell-chart-builder-mac-intel.zip) |
+| **vdB** | [vdb-chart-builder.exe](../../releases/latest/download/vdb-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/vdb-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/vdb-chart-builder-mac-intel.zip) |
 
 ### Windows
 
@@ -52,10 +54,11 @@ You only need to do this once per app.
   - Herschel: `NGC 891.jpg`, `ngc7814.png`, or the Messier/Caldwell number of a list object such as `M33.jpg` or `C23.jpg`
   - Barnard: `B33.jpg`, `Barnard 72.png`, or a well-known name such as `Horsehead.jpg`
   - Abell: `Abell 21.jpg`, `A39.png`, `PN A66 31.tif`, or another designation such as `NGC 6742.jpg`
+  - vdB: `vdB 139.jpg`, `vdb142.png`, another designation such as `NGC 7023.jpg` or `IC 2118.jpg`, or a name such as `Iris.jpg`
 - **Click** a square to pick a photo for it. **Right-click** (or Control-click) to replace or remove it.
 - **Rest the mouse on a photo** to see a larger preview.
 - **Right-click a photo → Add log / notes…** to record your dates, total exposure, sub length and count, gain, equipment and your own notes. Each log is saved as a plain text file next to that photo (for example `M31_log.txt`), and a one-line summary shows in the hover preview.
-- **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel Chart`, `Barnard Chart`, `Abell Chart`).
+- **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel Chart`, `Barnard Chart`, `Abell Chart`, `vdB Chart`).
 - **Edit title…**, **Clear all…** and **Star border: On/Off** are in the toolbar.
 
 Your original photos are never changed. The apps work from copies.
