@@ -61,8 +61,7 @@ CELL_W, CELL_H = 320, 260
 GAP = 5                     # white grid lines
 TITLE_H = 240
 CHART_W = COLS * CELL_W + (COLS + 1) * GAP
-FOOTER_H = 96                # strip under the grid with the website address
-CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP + FOOTER_H
+CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP
 
 APP_NAME = "Caldwell Chart Builder"
 COUNT = 109
@@ -1144,16 +1143,12 @@ def load_tile(n):
     return tile
 
 
-WEBSITE_FONT = 46
-
 
 def render_chart(title):
     """Build the full-resolution chart image."""
     img = Image.new("RGB", (CHART_W, CHART_H), "black")
     d = ImageDraw.Draw(img)
-    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - FOOTER_H - 1], fill="white")
-    d.text((CHART_W // 2, CHART_H - FOOTER_H // 2 + 4), WEBSITE, font=font("sans", WEBSITE_FONT),
-           fill=(205, 215, 240), anchor="mm")
+    d.rectangle([0, TITLE_H, CHART_W - 1, CHART_H - 1], fill="white")
 
     done = 0
     for n in range(1, COUNT + 1):
@@ -1793,24 +1788,11 @@ class App:
             c.move("hover", px - bx[0], py - bx[1])
         c.tag_raise("hover")
 
-    def website_at(self, cx, cy):
-        """True when the pointer is over the website address under the grid."""
-        if not self.scale:
-            return False
-        x = (cx - self.ox) / self.scale - self.bx
-        y = (cy - self.oy) / self.scale - self.bx
-        half = font("sans", WEBSITE_FONT).getlength(WEBSITE) / 2 + 30
-        return (CHART_H - FOOTER_H <= y <= CHART_H) and abs(x - CHART_W / 2) <= half
-
     def on_motion(self, e):
         n = self.cell_at(e.x, e.y)
         self.highlight(n)
         self.schedule_hover(n, e.x, e.y)
-        over_site = self.website_at(e.x, e.y)
-        self.canvas.config(cursor="hand2" if over_site else "")
-        if over_site:
-            self.status_var.set(f"Click to open {WEBSITE}")
-        elif n:
+        if n:
             state = ("click to replace, right-click for options" if cell_path(n).exists()
                      else "empty — drop a photo here or click to choose one")
             self.status_var.set(f"{PREFIX}{n}  ·  {NAMES[n]}  ·  {state}")
@@ -1819,9 +1801,6 @@ class App:
 
     def on_click(self, e):
         self.hide_hover()
-        if self.website_at(e.x, e.y):
-            webbrowser.open(WEBSITE_URL)
-            return
         n = self.cell_at(e.x, e.y)
         if n:
             self.choose_for(n)
