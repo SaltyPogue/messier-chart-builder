@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [Messier, Caldwell, Sharpless]
+        app: [Messier, Caldwell, Sharpless, "Herschel 400", Barnard, Abell]
         runner: [macos-14, macos-15-intel]
         include:
           - runner: macos-14
@@ -40,6 +40,21 @@ jobs:
             script: sharpless_chart.py
             icon: sharpless_icon.icns
             bundle: com.saltypogue.sharplesschartbuilder
+          - app: Herschel 400
+            slug: herschel-400-chart-builder
+            script: herschel400_chart.py
+            icon: herschel_icon.icns
+            bundle: com.saltypogue.herschel400chartbuilder
+          - app: Barnard
+            slug: barnard-chart-builder
+            script: barnard_chart.py
+            icon: barnard_icon.icns
+            bundle: com.saltypogue.barnardchartbuilder
+          - app: Abell
+            slug: abell-chart-builder
+            script: abell_chart.py
+            icon: abell_icon.icns
+            bundle: com.saltypogue.abellchartbuilder
     runs-on: ${{ matrix.runner }}
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
@@ -86,7 +101,7 @@ jobs:
           "dist/$APP_NAME.app/Contents/MacOS/$APP_NAME" > app.log 2>&1 &
           PID=$!
           sleep 25
-          screencapture -x "screenshot-${{ matrix.app }}-${{ matrix.arch }}.png" || true
+          screencapture -x "screenshot-${{ matrix.slug }}-${{ matrix.arch }}.png" || true
           if kill -0 $PID 2>/dev/null; then
             echo "App is running"; kill $PID
           else
@@ -98,14 +113,14 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mac-${{ matrix.app }}-${{ matrix.arch }}
+          name: mac-${{ matrix.slug }}-${{ matrix.arch }}
           path: ${{ env.ZIP_NAME }}
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: screenshot-${{ matrix.app }}-${{ matrix.arch }}
-          path: screenshot-${{ matrix.app }}-${{ matrix.arch }}.png
+          name: screenshot-${{ matrix.slug }}-${{ matrix.arch }}
+          path: screenshot-${{ matrix.slug }}-${{ matrix.arch }}.png
           if-no-files-found: ignore
 
   build-windows:
@@ -126,6 +141,18 @@ jobs:
             slug: sharpless-chart-builder
             script: sharpless_chart.py
             icon: sharpless_icon.ico
+          - app: Herschel 400
+            slug: herschel-400-chart-builder
+            script: herschel400_chart.py
+            icon: herschel_icon.ico
+          - app: Barnard
+            slug: barnard-chart-builder
+            script: barnard_chart.py
+            icon: barnard_icon.ico
+          - app: Abell
+            slug: abell-chart-builder
+            script: abell_chart.py
+            icon: abell_icon.ico
     runs-on: windows-latest
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
@@ -166,7 +193,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: win-${{ matrix.app }}
+          name: win-${{ matrix.slug }}
           path: ${{ env.EXE_NAME }}
 
   release:
@@ -239,13 +266,16 @@ jobs:
             out/*.zip
             out/*.exe
           body: |
-            **Messier, Caldwell and Sharpless Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
+            **Messier, Caldwell, Sharpless, Herschel 400, Barnard and Abell Chart Builders, Version ${{ env.VERSION }}**, created by SaltyPogue · [www.saltypogue.com](https://www.saltypogue.com)
 
             | App | Windows | Mac (Apple chip) | Mac (Intel) |
             |---|---|---|---|
             | **Messier** · 110 objects | messier-chart-builder.exe | messier-chart-builder-mac-apple-silicon.zip | messier-chart-builder-mac-intel.zip |
             | **Caldwell** · 109 objects | caldwell-chart-builder.exe | caldwell-chart-builder-mac-apple-silicon.zip | caldwell-chart-builder-mac-intel.zip |
             | **Sharpless** · 313 nebulae | sharpless-chart-builder.exe | sharpless-chart-builder-mac-apple-silicon.zip | sharpless-chart-builder-mac-intel.zip |
+            | **Herschel 400** · 400 objects | herschel-400-chart-builder.exe | herschel-400-chart-builder-mac-apple-silicon.zip | herschel-400-chart-builder-mac-intel.zip |
+            | **Barnard** · 345 dark nebulae | barnard-chart-builder.exe | barnard-chart-builder-mac-apple-silicon.zip | barnard-chart-builder-mac-intel.zip |
+            | **Abell** · 86 planetary nebulae | abell-chart-builder.exe | abell-chart-builder-mac-apple-silicon.zip | abell-chart-builder-mac-intel.zip |
 
             **Windows:** download the .exe and double-click it. Windows may show "Windows protected your PC" because the app
             isn't from the Microsoft Store: click **More info**, then **Run anyway**.
