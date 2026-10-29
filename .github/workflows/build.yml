@@ -21,42 +21,51 @@ jobs:
             label: Apple Silicon
             arch: AppleSilicon
             archslug: apple-silicon
+            archfile: Mac-Apple-Silicon
           - runner: macos-15-intel
             label: Intel
             arch: Intel
             archslug: intel
+            archfile: Mac-Intel
           - app: Messier
             slug: messier-chart-builder
+            file: Messier-Chart-Builder
             script: messier_chart.py
             icon: messier_icon.icns
             bundle: com.saltypogue.messierchartbuilder
           - app: Caldwell
             slug: caldwell-chart-builder
+            file: Caldwell-Chart-Builder
             script: caldwell_chart.py
             icon: caldwell_icon.icns
             bundle: com.saltypogue.caldwellchartbuilder
           - app: Sharpless
             slug: sharpless-chart-builder
+            file: Sharpless-Chart-Builder
             script: sharpless_chart.py
             icon: sharpless_icon.icns
             bundle: com.saltypogue.sharplesschartbuilder
           - app: Herschel
             slug: herschel-chart-builder
+            file: Herschel-Chart-Builder
             script: herschel_chart.py
             icon: herschel_icon.icns
             bundle: com.saltypogue.herschelchartbuilder
           - app: Barnard
             slug: barnard-chart-builder
+            file: Barnard-Chart-Builder
             script: barnard_chart.py
             icon: barnard_icon.icns
             bundle: com.saltypogue.barnardchartbuilder
           - app: Abell
             slug: abell-chart-builder
+            file: Abell-Chart-Builder
             script: abell_chart.py
             icon: abell_icon.icns
             bundle: com.saltypogue.abellchartbuilder
           - app: vdB
             slug: vdb-chart-builder
+            file: vdB-Chart-Builder
             script: vdb_chart.py
             icon: vdb_icon.icns
             bundle: com.saltypogue.vdbchartbuilder
@@ -70,7 +79,7 @@ jobs:
         run: |
           VERSION="$(tr -d '[:space:]' < VERSION)"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "ZIP_NAME=${{ matrix.slug }}-mac-${{ matrix.archslug }}.zip" >> "$GITHUB_ENV"
+          echo "ZIP_NAME=${{ matrix.file }}-${{ matrix.archfile }}.zip" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v5
         with:
@@ -140,36 +149,43 @@ jobs:
         include:
           - app: Messier
             slug: messier-chart-builder
+            file: Messier-Chart-Builder
             script: messier_chart.py
             icon: icon.ico
           - app: Caldwell
             slug: caldwell-chart-builder
+            file: Caldwell-Chart-Builder
             script: caldwell_chart.py
             icon: caldwell_icon.ico
           - app: Sharpless
             slug: sharpless-chart-builder
+            file: Sharpless-Chart-Builder
             script: sharpless_chart.py
             icon: sharpless_icon.ico
           - app: Herschel
             slug: herschel-chart-builder
+            file: Herschel-Chart-Builder
             script: herschel_chart.py
             icon: herschel_icon.ico
           - app: Barnard
             slug: barnard-chart-builder
+            file: Barnard-Chart-Builder
             script: barnard_chart.py
             icon: barnard_icon.ico
           - app: Abell
             slug: abell-chart-builder
+            file: Abell-Chart-Builder
             script: abell_chart.py
             icon: abell_icon.ico
           - app: vdB
             slug: vdb-chart-builder
+            file: vdB-Chart-Builder
             script: vdb_chart.py
             icon: vdb_icon.ico
     runs-on: windows-latest
     env:
       APP_NAME: ${{ matrix.app }} Chart Builder
-      EXE_NAME: ${{ matrix.slug }}.exe
+      EXE_NAME: ${{ matrix.file }}.exe
     steps:
       - uses: actions/checkout@v4
 
@@ -201,7 +217,7 @@ jobs:
           Write-Host "App is running"
           Get-Process | Where-Object { $_.ProcessName -like "*Chart Builder*" } | Stop-Process -Force
 
-      - name: Give the file its web-style name
+      - name: Give the file its download name (e.g. Messier-Chart-Builder.exe)
         shell: pwsh
         run: Copy-Item "dist\$env:APP_NAME.exe" "$env:EXE_NAME"
 
@@ -293,13 +309,13 @@ jobs:
 
             | App | Windows | Mac (Apple chip) | Mac (Intel) |
             |---|---|---|---|
-            | **Messier** · 110 objects | messier-chart-builder.exe | messier-chart-builder-mac-apple-silicon.zip | messier-chart-builder-mac-intel.zip |
-            | **Caldwell** · 109 objects | caldwell-chart-builder.exe | caldwell-chart-builder-mac-apple-silicon.zip | caldwell-chart-builder-mac-intel.zip |
-            | **Sharpless** · 313 nebulae | sharpless-chart-builder.exe | sharpless-chart-builder-mac-apple-silicon.zip | sharpless-chart-builder-mac-intel.zip |
-            | **Herschel** · 400 objects | herschel-chart-builder.exe | herschel-chart-builder-mac-apple-silicon.zip | herschel-chart-builder-mac-intel.zip |
-            | **Barnard** · 345 dark nebulae | barnard-chart-builder.exe | barnard-chart-builder-mac-apple-silicon.zip | barnard-chart-builder-mac-intel.zip |
-            | **Abell** · 86 planetary nebulae | abell-chart-builder.exe | abell-chart-builder-mac-apple-silicon.zip | abell-chart-builder-mac-intel.zip |
-            | **vdB** · 158 reflection nebulae | vdb-chart-builder.exe | vdb-chart-builder-mac-apple-silicon.zip | vdb-chart-builder-mac-intel.zip |
+            | **Messier** · 110 objects | Messier-Chart-Builder.exe | Messier-Chart-Builder-Mac-Apple-Silicon.zip | Messier-Chart-Builder-Mac-Intel.zip |
+            | **Caldwell** · 109 objects | Caldwell-Chart-Builder.exe | Caldwell-Chart-Builder-Mac-Apple-Silicon.zip | Caldwell-Chart-Builder-Mac-Intel.zip |
+            | **Sharpless** · 313 nebulae | Sharpless-Chart-Builder.exe | Sharpless-Chart-Builder-Mac-Apple-Silicon.zip | Sharpless-Chart-Builder-Mac-Intel.zip |
+            | **Herschel** · 400 objects | Herschel-Chart-Builder.exe | Herschel-Chart-Builder-Mac-Apple-Silicon.zip | Herschel-Chart-Builder-Mac-Intel.zip |
+            | **Barnard** · 345 dark nebulae | Barnard-Chart-Builder.exe | Barnard-Chart-Builder-Mac-Apple-Silicon.zip | Barnard-Chart-Builder-Mac-Intel.zip |
+            | **Abell** · 86 planetary nebulae | Abell-Chart-Builder.exe | Abell-Chart-Builder-Mac-Apple-Silicon.zip | Abell-Chart-Builder-Mac-Intel.zip |
+            | **vdB** · 158 reflection nebulae | vdB-Chart-Builder.exe | vdB-Chart-Builder-Mac-Apple-Silicon.zip | vdB-Chart-Builder-Mac-Intel.zip |
 
             **Windows:** download the .exe and double-click it. Windows may show "Windows protected your PC" because the app
             isn't from the Microsoft Store: click **More info**, then **Run anyway**.

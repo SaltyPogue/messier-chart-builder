@@ -20,13 +20,13 @@ Build a chart of a whole deep-sky catalog from your own astrophotos. Drag your p
 
 | App | Windows | Mac (Apple chip) | Mac (Intel) |
 |---|---|---|---|
-| **Messier** | [messier-chart-builder.exe](../../releases/latest/download/messier-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/messier-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/messier-chart-builder-mac-intel.zip) |
-| **Caldwell** | [caldwell-chart-builder.exe](../../releases/latest/download/caldwell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/caldwell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/caldwell-chart-builder-mac-intel.zip) |
-| **Sharpless** | [sharpless-chart-builder.exe](../../releases/latest/download/sharpless-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/sharpless-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/sharpless-chart-builder-mac-intel.zip) |
-| **Herschel** | [herschel-chart-builder.exe](../../releases/latest/download/herschel-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/herschel-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/herschel-chart-builder-mac-intel.zip) |
-| **Barnard** | [barnard-chart-builder.exe](../../releases/latest/download/barnard-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/barnard-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/barnard-chart-builder-mac-intel.zip) |
-| **Abell** | [abell-chart-builder.exe](../../releases/latest/download/abell-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/abell-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/abell-chart-builder-mac-intel.zip) |
-| **vdB** | [vdb-chart-builder.exe](../../releases/latest/download/vdb-chart-builder.exe) | [apple-silicon.zip](../../releases/latest/download/vdb-chart-builder-mac-apple-silicon.zip) | [intel.zip](../../releases/latest/download/vdb-chart-builder-mac-intel.zip) |
+| **Messier** | [Messier-Chart-Builder.exe](../../releases/latest/download/Messier-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Messier-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Messier-Chart-Builder-Mac-Intel.zip) |
+| **Caldwell** | [Caldwell-Chart-Builder.exe](../../releases/latest/download/Caldwell-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Caldwell-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Caldwell-Chart-Builder-Mac-Intel.zip) |
+| **Sharpless** | [Sharpless-Chart-Builder.exe](../../releases/latest/download/Sharpless-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Sharpless-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Sharpless-Chart-Builder-Mac-Intel.zip) |
+| **Herschel** | [Herschel-Chart-Builder.exe](../../releases/latest/download/Herschel-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Herschel-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Herschel-Chart-Builder-Mac-Intel.zip) |
+| **Barnard** | [Barnard-Chart-Builder.exe](../../releases/latest/download/Barnard-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Barnard-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Barnard-Chart-Builder-Mac-Intel.zip) |
+| **Abell** | [Abell-Chart-Builder.exe](../../releases/latest/download/Abell-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/Abell-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/Abell-Chart-Builder-Mac-Intel.zip) |
+| **vdB** | [vdB-Chart-Builder.exe](../../releases/latest/download/vdB-Chart-Builder.exe) | [apple-silicon.zip](../../releases/latest/download/vdB-Chart-Builder-Mac-Apple-Silicon.zip) | [intel.zip](../../releases/latest/download/vdB-Chart-Builder-Mac-Intel.zip) |
 
 ### Windows
 
@@ -34,8 +34,8 @@ Download the `.exe` and double-click it. Windows may show "Windows protected you
 
 ### Mac
 
-- **Apple chip (M1, M2, M3, M4…)**, most Macs from late 2020 on: the `apple-silicon` file
-- **Intel Mac**: the `intel` file
+- **Apple chip (M1, M2, M3, M4…)**, most Macs from late 2020 on: the `Mac-Apple-Silicon` file
+- **Intel Mac**: the `Mac-Intel` file
 
 Not sure which you have? Apple menu  → **About This Mac** → look at **Chip** or **Processor**.
 
