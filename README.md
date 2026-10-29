@@ -45,20 +45,43 @@ Not sure which you have? Apple menu  → **About This Mac** → look at **Chip**
 
 You only need to do this once per app.
 
-## Using the apps
+## Using the apps (Version 1.2)
 
-- **Drag photos onto the window.** Files named with their catalog number go to the right square automatically. You can drop many at once, or a whole folder.
-  - Messier: `M31.jpg`, `Messier 81.png`
-  - Caldwell: `C20.jpg`, `Caldwell 49.tif`, or the NGC/IC number such as `NGC 7000.jpg`
-  - Sharpless: `Sh2-155.jpg`, `Sharpless 155.png`, or a matching NGC/IC/Messier number such as `IC 1805.jpg`
+The first time an app opens, a short welcome guide explains the basics. You can open it again any time with **Help**.
+
+- **Drag photos onto the window.** Files named with their catalog number *or the object's name* go to the right square automatically. You can drop many at once, or a whole folder, and a progress bar shows how it's going (with Cancel).
+  - Messier: `M31.jpg`, `Messier 81.png`, `Andromeda Galaxy.jpg`, or the NGC number such as `NGC 224.jpg`
+  - Caldwell: `C20.jpg`, `Caldwell 49.tif`, the NGC/IC number such as `NGC 7000.jpg`, or a name such as `Bubble Nebula.jpg`
+  - Sharpless: `Sh2-155.jpg`, `Sharpless 155.png`, a matching NGC/IC/Messier number such as `IC 1805.jpg`, or a name such as `Heart Nebula.jpg`
   - Herschel: `NGC 891.jpg`, `ngc7814.png`, or the Messier/Caldwell number of a list object such as `M33.jpg` or `C23.jpg`
   - Barnard: `B33.jpg`, `Barnard 72.png`, or a well-known name such as `Horsehead.jpg`
   - Abell: `Abell 21.jpg`, `A39.png`, `PN A66 31.tif`, or another designation such as `NGC 6742.jpg`
   - vdB: `vdB 139.jpg`, `vdb142.png`, another designation such as `NGC 7023.jpg` or `IC 2118.jpg`, or a name such as `Iris.jpg`
-- **Click** a square to pick a photo for it. **Right-click** (or Control-click) to replace or remove it.
+- **Any photo format you're likely to have:** JPG, PNG, WebP, and 8-, 16- and 32-bit TIFFs straight from Siril, PixInsight, APP or DeepSkyStacker. A stack that hasn't been stretched yet (it looks almost black) is brightened automatically for the chart. Your file isn't changed.
+- **Click** a square to pick a photo for it. **Right-click** (or Control-click on a Mac) for more:
+  - **Adjust framing…**: drag the box to move it and scroll (or use the slider) to zoom. **Show whole photo** fits big targets like M31 without cutting off the ends; zoom in to fill the square with small targets like M57.
+  - **Add log / notes…**: record your dates, total exposure, sub length and count, gain, equipment and your own notes. Each log is saved as a plain text file next to that photo (for example `M31_log.txt`), and a one-line summary shows in the hover preview.
+  - **Open original** or **Remove photo**.
+- **Undo** (or Ctrl+Z / Cmd+Z) puts back a photo you removed, replaced or changed the framing of, or everything after **Clear all**.
+- **Missing list** shows what's still to photograph. Click an object to find it on the chart, double-click to choose a photo for it, and **Save checklist…** as a text file or a spreadsheet (CSV).
 - **Rest the mouse on a photo** to see a larger preview.
-- **Right-click a photo → Add log / notes…** to record your dates, total exposure, sub length and count, gain, equipment and your own notes. Each log is saved as a plain text file next to that photo (for example `M31_log.txt`), and a one-line summary shows in the hover preview.
 - **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel Chart`, `Barnard Chart`, `Abell Chart`, `vdB Chart`).
-- **Edit title…**, **Clear all…** and **Star border: On/Off** are in the toolbar.
+- **Edit title…**, **Library folder**, **Clear all…** and **Star border: On/Off** are in the toolbar.
 
 Your original photos are never changed. The apps work from copies.
+
+## How the code is organised
+
+All seven apps share one engine, so a fix or new feature is made once and every app gets it.
+
+| File | What it is |
+|---|---|
+| `chart_core.py` | The whole app: window, chart, framing, logs, undo, missing list… shared by all seven |
+| `catalogs/<name>.py` | One small file per catalog: object names, grid size, description and file-name matching |
+| `<name>_chart.py` | Three-line start file for each app (picks its catalog) |
+| `assets/` | Footer icons for each app |
+| `*_icon.ico` / `*_icon.icns` | Windows and Mac app icons |
+| `website/` | Website pages and the download counter snippet |
+| `VERSION` | The version number for the downloads. Keep it the same as `APP_VERSION` in `chart_core.py` |
+
+Every change pushed to GitHub builds all 21 downloads (7 apps × Windows, Mac Apple chip and Mac Intel), checks that each one starts, and publishes them to the release for the current version. The download links never change.
