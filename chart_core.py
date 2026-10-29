@@ -166,6 +166,40 @@ def match_name(stem):
     return None
 
 
+_DESIG_RE = re.compile(r"(?<![a-z0-9])(ngc|ic|sh[\s_\-.]*2|messier|m|abell|vdb|barnard|b|caldwell|c)"
+                       r"[\s_\-.]*0*(\d{1,4})(?!\d)", re.I)
+
+
+def why_skipped(stem):
+    """A helpful reason when a file name doesn't belong to this catalog, e.g.
+    'IC 1396 isn't in the Caldwell catalog - it's Sh2-131 in the Sharpless Chart Builder'."""
+    from catalogs import messier, caldwell, sharpless, herschel, barnard, abell, vdb
+    elsewhere = []
+    for other in (messier, caldwell, sharpless, herschel, barnard, abell, vdb):
+        if other.APP_NAME == APP_NAME:
+            continue
+        try:
+            n = other.parse_number(stem)
+        except Exception:
+            n = None
+        if n:
+            elsewhere.append(f"{other.LABEL[n]} in the {other.APP_NAME}")
+    m = _DESIG_RE.search(stem)
+    what = None
+    if m:
+        cat = re.sub(r"[\s_\-.]", "", m.group(1)).upper()
+        cat = {"MESSIER": "M", "CALDWELL": "C", "BARNARD": "B"}.get(cat, cat)
+        num = int(m.group(2))
+        what = {"M": f"M{num}", "C": f"C{num}", "B": f"B{num}", "SH2": f"Sh2-{num}",
+                "ABELL": f"Abell {num}", "VDB": f"vdB {num}"}.get(cat, f"{cat} {num}")
+    if elsewhere:
+        head = f"{what} isn't in the {CATALOG} catalog" if what else f"not a {CATALOG} object"
+        return f"{head} - it's {' and '.join(elsewhere[:2])}"
+    if what:
+        return f"{what} isn't in the {CATALOG} catalog"
+    return f"no {CATALOG} number or object name found in the file name"
+
+
 def find_square(stem):
     """Which square a file belongs to, from its name. Returns (square or None, how)."""
     n = CAT.parse_number(stem)
@@ -1500,8 +1534,10 @@ class App:
 
     def import_single(self, f, target):
         n, how = find_square(f.stem)
-        if n is None:
-            n = target or self.ask_number(f)
+        if n is None and target is None:
+            n = self.ask_number(f, why_skipped(f.stem))
+        elif n is None:
+            n = target
         if n is None:
             return
         if cell_path(n).exists() and not messagebox.askyesno(
@@ -1568,7 +1604,7 @@ class App:
             win.update_idletasks()
             n, how = find_square(f.stem)
             if n is None:
-                state["skipped"].append(f"{f.name}: no {CATALOG} number or name found in the file name")
+                state["skipped"].append(f"{f.name}: {why_skipped(f.stem)}")
             else:
                 try:
                     if cell_path(n).exists() and n not in state["added"]:
@@ -1613,14 +1649,16 @@ class App:
                 messagebox.showwarning(
                     "Some photos were skipped",
                     "\n".join(sk[:25]) + ("\n…" if len(sk) > 25 else "") +
-                    f"\n\nTip: name files like {ex[0]} or {ex[-1]}, or drop them one at a time onto a square.")
+                    f"\n\nTip: name files like {ex[0]} or {ex[-1]}. To put a photo in a square anyway, "
+                    "drop it on its own onto that square.")
 
         self.root.after(30, step)
 
-    def ask_number(self, f):
+    def ask_number(self, f, reason=""):
         num = simpledialog.askinteger(
             "Which object?",
-            f"Couldn't tell which object {f.name} is from its name.\n\nWhich {CAT.NUMBER_WORD} is it?",
+            f"{f.name}: {reason or 'couldn' + chr(39) + 't tell which object this is from its name'}.\n\n"
+            f"To put it in a square anyway, type the {CAT.NUMBER_WORD}:",
             minvalue=1, parent=self.root)
         if num is None:
             return None
