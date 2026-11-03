@@ -49,7 +49,7 @@ except Exception:
 
 Image.MAX_IMAGE_PIXELS = None  # large mosaics are fine
 
-APP_VERSION = "1.2"            # keep in step with the VERSION file
+APP_VERSION = "1.3"            # keep in step with the VERSION file
 AUTHOR = "SaltyPogue"
 WEBSITE = "www.saltypogue.com"
 WEBSITE_URL = "https://www.saltypogue.com"
