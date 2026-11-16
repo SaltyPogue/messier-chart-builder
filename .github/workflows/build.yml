@@ -15,9 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         app: [Messier, Caldwell, Sharpless, Herschel, Barnard, Abell, vdB]
-        runner: [macos-14, macos-15-intel]
+        runner: [macos-15, macos-15-intel]
         include:
-          - runner: macos-14
+          - runner: macos-15
             label: Apple Silicon
             arch: AppleSilicon
             archslug: apple-silicon
