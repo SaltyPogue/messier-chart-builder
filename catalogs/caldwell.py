@@ -19,6 +19,8 @@ CELL_W, CELL_H = 320, 260
 START_MAXIMIZED = False
 EXAMPLES = ['C20.jpg', 'NGC 7000.jpg', 'Bubble Nebula.jpg']          # example file names shown in the help
 SPARE_LINES = [('Caldwell Catalog', 'sans', 24, (110, 110, 130)), ('109 objects', 'sans', 22, (80, 80, 98))]           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'caldwell', 'word': 'Caldwell', 'label': 'Caldwell Checklist', 'cb': 'cb_M', 'mode': 'direct'}
 DESCRIPTION = ("The Caldwell Catalogue: 109 bright deep-sky objects chosen by Sir Patrick Moore in 1995 as a companion to the Messier list, including many southern-sky targets that Messier never saw. It is named after Moore's full surname, Caldwell-Moore.")
 
 # Caldwell catalog: number -> (designation, name or type)

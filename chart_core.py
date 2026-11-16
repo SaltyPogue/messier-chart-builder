@@ -18,7 +18,7 @@ and each app's start file (messier_chart.py etc.) is three lines that pick a cat
 
 Your photos are copied into the app's library folder; your originals are never changed.
 
-Requirements:  pip install pillow tkinterdnd2 numpy tifffile
+Requirements:  pip install pillow tkinterdnd2 numpy tifffile pypdf
 """
 
 import json
@@ -29,11 +29,13 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import webbrowser
 from pathlib import Path
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
+from tkinter import font as tkfont
 
 try:
     from PIL import Image, ImageDraw, ImageEnhance, ImageFont, ImageOps, ImageTk
@@ -49,7 +51,7 @@ except Exception:
 
 Image.MAX_IMAGE_PIXELS = None  # large mosaics are fine
 
-APP_VERSION = "1.3"            # keep in step with the VERSION file
+APP_VERSION = "1.4"            # keep in step with the VERSION file
 AUTHOR = "SaltyPogue"
 WEBSITE = "www.saltypogue.com"
 WEBSITE_URL = "https://www.saltypogue.com"
@@ -97,6 +99,9 @@ def configure(cat):
     FOOTER_H = max(170, CHART_W * 2 // 45)   # strip under the grid with a short description
     CHART_H = TITLE_H + ROWS * CELL_H + (ROWS + 1) * GAP + FOOTER_H
     _NAME_INDEX.clear()
+    global CHECKLIST, CHECKLIST_NAME_RE
+    CHECKLIST = cat.CHECKLIST
+    CHECKLIST_NAME_RE = re.compile(CHECKLIST["file"] + r".*check.*list.*\.pdf$", re.I)
 
 
 def resource(name):
@@ -856,39 +861,66 @@ MOD = "Command" if IS_MAC else "Control"
 MOD_NAME = "Cmd" if IS_MAC else "Ctrl"
 
 
-def Btn(parent, **kw):
-    """A button that keeps its dark colours on every platform.
+class SoftButton(tk.Canvas):
+    """A softly rounded button that looks the same on Windows, macOS and Linux."""
 
-    macOS draws tk.Button natively and ignores background colours (white text on
-    a white button), so there a styled Label that acts like a button is used.
-    """
-    if not IS_MAC:
-        return tk.Button(parent, **kw)
-    command = kw.pop("command", None)
-    bg = kw.pop("bg", "#2b2b36")
-    fg = kw.pop("fg", "#111111")
-    active = kw.pop("activebackground", bg)
-    for k in ("activeforeground", "relief", "bd", "highlightthickness"):
-        kw.pop(k, None)
-    kw.setdefault("padx", 12)
-    kw.setdefault("pady", 6)
-    kw.setdefault("cursor", "hand2")
-    lbl = tk.Label(parent, bg=bg, fg=fg, **kw)
-    lbl._enabled = True
-    lbl._fg = fg
-    lbl.bind("<Enter>", lambda e: lbl._enabled and lbl.config(bg=active))
-    lbl.bind("<Leave>", lambda e: lbl.config(bg=bg))
-    if command:
-        lbl.bind("<ButtonRelease-1>", lambda e: lbl._enabled and command())
-    return lbl
+    def __init__(self, parent, text="", command=None, bg="#2b2b36", fg=None,
+                 activebackground=None, font=None, padx=12, pady=6, cursor="hand2", **_ignored):
+        try:
+            pbg = parent.cget("bg")
+        except tk.TclError:
+            pbg = "#1b1b22"
+        self._cmd = command
+        self._enabled = True
+
+        def rgb(c):
+            return tuple(v // 256 for v in parent.winfo_rgb(c))
+
+        def mix(a, b, t):
+            return "#%02x%02x%02x" % tuple(round(x * (1 - t) + y * t) for x, y in zip(rgb(a), rgb(b)))
+
+        if fg is None:                      # readable text on light and dark buttons alike
+            r_, g_, b_ = rgb(bg)
+            fg = "#111111" if (0.299 * r_ + 0.587 * g_ + 0.114 * b_) / 255 > 0.6 else "#ffffff"
+        self._base = mix(bg, "#ffffff", 0.06)
+        self._hover = mix(activebackground or bg, "#ffffff", 0.15)
+        self._down = mix(bg, "#000000", 0.12)
+        fgc = mix(fg, bg, 0.10)
+        fnt = tkfont.Font(root=parent, font=font) if font else tkfont.nametofont("TkDefaultFont")
+        w = fnt.measure(text) + 2 * int(padx) + 6
+        h = fnt.metrics("linespace") + 2 * int(pady) + 4
+        super().__init__(parent, width=w, height=h, bg=pbg, bd=0, highlightthickness=0, cursor=cursor)
+        r = min(11, h // 2)
+        x0, y0, x1, y1 = 1, 1, w - 1, h - 1
+        pts = [x0 + r, y0, x1 - r, y0, x1, y0, x1, y0 + r, x1, y1 - r, x1, y1, x1 - r, y1,
+               x0 + r, y1, x0, y1, x0, y1 - r, x0, y0 + r, x0, y0]
+        self._shape = self.create_polygon(pts, smooth=True, fill=self._base, outline="")
+        self._fg_on, self._fg_off = fgc, mix(fg, bg, 0.55)
+        self._label = self.create_text(w // 2, h // 2, text=text, fill=fgc, font=fnt)
+        self.bind("<Enter>", lambda e: self._enabled and self.itemconfig(self._shape, fill=self._hover))
+        self.bind("<Leave>", lambda e: self.itemconfig(self._shape, fill=self._base))
+        self.bind("<ButtonPress-1>", lambda e: self._enabled and self.itemconfig(self._shape, fill=self._down))
+        self.bind("<ButtonRelease-1>", self._release)
+
+    def _release(self, e):
+        inside = 0 <= e.x <= self.winfo_width() and 0 <= e.y <= self.winfo_height()
+        self.itemconfig(self._shape, fill=self._hover if inside else self._base)
+        if inside and self._cmd and self._enabled:
+            self._cmd()
+
+    def set_enabled(self, on):
+        self._enabled = bool(on)
+        self.itemconfig(self._label, fill=self._fg_on if on else self._fg_off)
+        self.config(cursor="hand2" if on else "arrow")
+
+
+def Btn(parent, **kw):
+    """Soft rounded button (see SoftButton). Accepts the usual tk.Button-style options."""
+    return SoftButton(parent, **kw)
 
 
 def set_enabled(widget, on):
-    if isinstance(widget, tk.Button):
-        widget.config(state="normal" if on else "disabled")
-    else:
-        widget._enabled = on
-        widget.config(fg=widget._fg if on else "#6b6b78", cursor="hand2" if on else "arrow")
+    widget.set_enabled(on)
 
 
 def Check(parent, text, variable, command, bg, fg):
@@ -941,6 +973,196 @@ def wheel_steps(e):
 # --------------------------------------------------------------------------
 # Live twinkling stars in the border
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Companion checklist (the interactive checklist PDF sold on Etsy)
+# --------------------------------------------------------------------------
+CHECKLIST_URL = "https://saltypogue.etsy.com"
+CHECKLIST = {}
+CHECKLIST_NAME_RE = re.compile(r"$^")
+
+
+def find_checklists():
+    """Look for this catalog's checklist PDF in the usual places. Newest first."""
+    home = Path.home()
+    roots = []
+    for base in (home, home / "OneDrive"):
+        for sub in ("Downloads", "Documents", "Desktop"):
+            roots.append(base / sub)
+    roots.append(home)
+    found, seen = [], set()
+
+    def scan(d, depth):
+        try:
+            entries = list(os.scandir(d))
+        except OSError:
+            return
+        for e in entries:
+            try:
+                if e.is_file() and CHECKLIST_NAME_RE.search(e.name) and "before update" not in e.name.lower():
+                    p = Path(e.path).resolve()
+                    if p not in seen:
+                        seen.add(p)
+                        found.append((e.stat().st_mtime, p))
+                elif depth > 0 and e.is_dir() and not e.name.startswith("."):
+                    scan(e.path, depth - 1)
+            except OSError:
+                continue
+
+    for r in roots:
+        scan(r, 0 if r == home else 1)
+    return [p for _t, p in sorted(found, reverse=True)]
+
+
+def _pdf_widgets(writer):
+    """Map field name -> [(page_index, annotation)] for every widget in the PDF."""
+    out = {}
+    for pi, page in enumerate(writer.pages):
+        for a in page.get("/Annots", []) or []:
+            o = a.get_object()
+            t = o.get("/T")
+            if t is not None:
+                out.setdefault(str(t), []).append((pi, o))
+    return out
+
+
+def update_checklist_pdf(pdf_path, keys):
+    """Tick the checklist box for every catalog key in `keys`, then refresh the OBSERVED
+    stamps, index strike-throughs, progress bars and counters, exactly as the PDF's own
+    script would. Only ever ticks; never unticks.
+    Returns (newly_ticked, total_ticked, total_boxes).
+    Raises ImportError if pypdf is missing, ValueError if this isn't the right checklist.
+    """
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import NameObject, NumberObject
+
+    reader = PdfReader(str(pdf_path))
+    title = str((reader.metadata or {}).get("/Title", "") or "")
+    if CHECKLIST["word"].lower() not in title.lower():
+        raise ValueError("That PDF is not the %s. Please choose the right file." % CHECKLIST["label"])
+    writer = PdfWriter(clone_from=reader)
+    W = _pdf_widgets(writer)
+    cbp = CHECKLIST["cb"]
+    cb_names = [n for n in W if re.fullmatch(re.escape(cbp) + r"\d+", n)]
+    if not cb_names:
+        raise ValueError("The check-boxes were not found in that PDF.")
+
+    # the checklist's own script: catalogue table, season split and progress formulas
+    js_all, js_cb = "", ""
+    try:
+        names = writer._root_object["/Names"]["/JavaScript"].get_object()["/Names"]
+        for i in range(1, len(names), 2):
+            blob = names[i].get_object()["/JS"].get_object()
+            js_all += (blob.get_data().decode("latin1") if hasattr(blob, "get_data") else str(blob))
+    except Exception:
+        pass
+    first = sorted(cb_names, key=lambda n: int(re.sub(r"\D", "", n)))[0]
+    for _pi, o in W[first]:
+        try:
+            js_cb = str(o["/A"]["/JS"])
+        except Exception:
+            pass
+
+    if CHECKLIST["mode"] == "bykey":
+        m = re.search(r"var D=(\[\[.*?\]\]);", js_all, re.S)
+        if not m:
+            raise ValueError("Could not read the object list from that PDF.")
+        D = json.loads(m.group(1))
+        keymap = {e[3]: e[0] for e in D}
+        targets = ["%s%s" % (cbp, keymap[k]) for k in keys if k in keymap]
+    else:
+        targets = ["%s%s" % (cbp, k) for k in keys]
+
+    def is_on(o):
+        return str(o.get("/V", "/Off")) != "/Off"
+
+    newly = 0
+    for name in targets:
+        for _pi, o in W.get(name, []):
+            if is_on(o):
+                continue
+            states = [k for k in o["/AP"]["/N"].keys() if str(k) != "/Off"]
+            on = states[0] if states else "/Yes"
+            o[NameObject("/V")] = NameObject(on)
+            o[NameObject("/AS")] = NameObject(on)
+            newly += 1
+
+    checked = [n for n in cb_names if any(is_on(o) for _pi, o in W[n])]
+    suffixes = {n[len("cb_"):] for n in checked}          # e.g. "12" or "M12"
+
+    def show(o, vis):
+        o[NameObject("/F")] = NumberObject(4 if vis else 2)
+
+    for x in suffixes:
+        for _pi, o in W.get("ov_" + x, []):
+            show(o, True)
+    for name, lst in W.items():
+        m = re.fullmatch(r"ixo_((\w+?)(?:_\d+)?)", name)
+        if not m:
+            continue
+        rest = name[len("ixo_"):]
+        x = rest.split("_")[0]
+        if x not in suffixes:
+            continue
+        base = W.get("ix_" + rest, [])
+        vis = bool(base) and int(base[0][1].get("/F", 4)) == 4
+        for _pi, o in lst:
+            show(o, vis)
+
+    c = len(checked)
+    idx = [int(re.sub(r"\D", "", n)) for n in checked]
+
+    # progress bars (formula read from the PDF's own script)
+    mb = re.search(r"for\(var s=0;s<(\d+);s\+\+\)\{d\.getField\('bar'\+s\)\.display=\(s<Math\.floor\(([^)]*)\)\)", js_cb)
+    if mb:
+        nbars, expr = int(mb.group(1)), mb.group(2).replace(" ", "")
+        m1, m2 = re.fullmatch(r"c\*(\d+)/(\d+)", expr), re.fullmatch(r"c/(\d+)", expr)
+        lit = math.floor(c * int(m1.group(1)) / int(m1.group(2))) if m1 else (
+            math.floor(c / int(m2.group(1))) if m2 else None)
+        if lit is not None:
+            for s in range(nbars):
+                for _pi, o in W.get("bar%d" % s, []):
+                    show(o, s < lit)
+
+    # progress counters
+    mg = re.search(r"var G='([a-z]+)'", js_cb)
+    t = {}
+    if mg:
+        for i in idx:
+            if 1 <= i <= len(mg.group(1)):
+                ch = mg.group(1)[i - 1]
+                t[ch] = t.get(ch, 0) + 1
+    texts = {}
+    for fld, expr in re.findall(r"getField\('(prog_\w+)'\)\.value=([^;]+);", js_cb):
+        mm = re.fullmatch(r"(c|t\.(\w))\+'(.*)'", expr.strip())
+        if mm:
+            n = c if mm.group(1) == "c" else t.get(mm.group(2), 0)
+            texts[fld] = "%d%s" % (n, mm.group(3))
+    for fname, txt in texts.items():
+        for pi, _o in W.get(fname, []):
+            try:
+                writer.update_page_form_field_values(writer.pages[pi], {fname: txt}, auto_regenerate=False)
+            except Exception:
+                pass
+
+    pdf_path = Path(pdf_path)
+    fd, tmp = tempfile.mkstemp(suffix=".pdf", dir=str(pdf_path.parent))
+    os.close(fd)
+    try:
+        with open(tmp, "wb") as fh:
+            writer.write(fh)
+        os.replace(tmp, pdf_path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+    return newly, c, len(cb_names)
+
+
+
+# --------------------------------------------------------------------------
+# Live twinkling stars in the border
+# --------------------------------------------------------------------------
+
+
 class SpaceAnimator:
     TICK_MS = 50
     COUNT = 160
@@ -960,15 +1182,21 @@ class SpaceAnimator:
         W, H = a.preview_src.width * s, a.preview_src.height * s
         b = BORDER * s
         x0, y0 = a.ox, a.oy
-        return b, [(x0, y0, x0 + W, y0 + b), (x0, y0 + H - b, x0 + W, y0 + H),
-                   (x0, y0 + b, x0 + b, y0 + H - b), (x0 + W - b, y0 + b, x0 + W, y0 + H - b)]
+        cw, ch = a.canvas.winfo_width(), a.canvas.winfo_height()
+        out = []
+        for (l, t, r, bt) in [(x0, y0, x0 + W, y0 + b), (x0, y0 + H - b, x0 + W, y0 + H),
+                              (x0, y0 + b, x0 + b, y0 + H - b), (x0 + W - b, y0 + b, x0 + W, y0 + H - b)]:
+            l, t, r, bt = max(l, 0), max(t, 0), min(r, cw), min(bt, ch)
+            if r - l > 2 and bt - t > 2:
+                out.append((l, t, r, bt))
+        return b, out
 
     def start(self):
         self.stop()
         if not self.app.border_on or self.app.preview_src is None:
             return
         b, bands = self.bands()
-        if b < 8:
+        if b < 8 or not bands:
             return
         areas = [(x1 - x0) * (y1 - y0) for x0, y0, x1, y1 in bands]
         self.twinkles = []
@@ -1041,7 +1269,7 @@ class App:
         self.border_on = bool(self.settings.get("border", True))
         fw, fh = (CHART_W + 2 * BORDER, CHART_H + 2 * BORDER) if self.border_on else (CHART_W, CHART_H)
         w = int((h - 150) * fw / fh)
-        w = min(max(w, 1060), self.root.winfo_screenwidth() - 40)   # room for the whole toolbar
+        w = min(max(w, 1240), self.root.winfo_screenwidth() - 40)   # room for the whole toolbar
         self.root.geometry(f"{w}x{h}")
         self.root.minsize(500, 520)
         if CAT.START_MAXIMIZED:
@@ -1062,6 +1290,9 @@ class App:
         self.undo_btn = Btn(bar, text="Undo", command=self.do_undo, **BTN)
         self.undo_btn.pack(side="left", padx=3, pady=6)
         Btn(bar, text="Library folder", command=lambda: open_path(LIBRARY), **BTN).pack(side="left", padx=3, pady=6)
+        Btn(bar, text="Update my checklist…", command=self.update_checklist, bg="#1f4f7a", fg="white",
+            activebackground="#2b6aa3", activeforeground="white", relief="flat", padx=12, pady=6,
+            bd=0).pack(side="left", padx=3, pady=6)
         Btn(bar, text="Help", command=self.show_welcome, **BTN).pack(side="left", padx=3, pady=6)
         Btn(bar, text="Clear all…", command=self.clear_all, bg="#5a1f24", fg="white",
             activebackground="#7a2a31", activeforeground="white", relief="flat",
@@ -1087,6 +1318,7 @@ class App:
         if not HAS_DND:
             self.default_status = ("Drag and drop is off (pip install tkinterdnd2). "
                                    "Click a square or use Add photos.")
+        self.default_status += "  Scroll wheel to zoom."
         self.status_var.set(self.default_status)
 
         self.chart = None
@@ -1100,12 +1332,26 @@ class App:
         self.bx = 0
         self.scale, self.ox, self.oy = 1.0, 0, 0
         self._resize_job = None
+        self.zoom, self.panx, self.pany = 1.0, 0, 0
+        self._drag = None
+        self._pan_job = None
 
         self.canvas.bind("<Configure>", self._schedule_preview)
         self.canvas.bind("<Motion>", self.on_motion)
         self.canvas.bind("<Leave>", lambda e: (self.highlight(None), self.hide_hover(),
                                                self.status_var.set(self.default_status)))
-        self.canvas.bind("<Button-1>", self.on_click)
+        self.canvas.bind("<ButtonPress-1>", self.on_press)
+        self.canvas.bind("<B1-Motion>", self.on_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_release)
+        self.canvas.bind("<MouseWheel>", self.on_wheel)          # Windows and macOS
+        self.canvas.bind("<Button-4>", self.on_wheel)            # Linux
+        self.canvas.bind("<Button-5>", self.on_wheel)
+        for k in ("0", "<Control-Key-0>"):
+            self.root.bind(k if k.startswith("<") else f"<Key-{k}>", self.reset_zoom)
+        for k in ("plus", "equal", "KP_Add"):
+            self.root.bind(f"<Key-{k}>", lambda e: self.key_zoom(1.25))
+        for k in ("minus", "KP_Subtract"):
+            self.root.bind(f"<Key-{k}>", lambda e: self.key_zoom(1 / 1.25))
         self.canvas.bind("<Button-3>", self.on_right_click)
         if sys.platform == "darwin":
             self.canvas.bind("<Button-2>", self.on_right_click)
@@ -1329,17 +1575,111 @@ class App:
         if cw < 10 or ch < 10:
             return
         src = self.preview_src
-        self.scale = min(cw / src.width, ch / src.height)
+        base = min(cw / src.width, ch / src.height)
+        self.zoom = max(1.0, min(self.zoom, 12.0))
+        self.scale = base * self.zoom
         w, h = max(1, int(src.width * self.scale)), max(1, int(src.height * self.scale))
-        self.ox, self.oy = (cw - w) // 2, (ch - h) // 2
+        lim_x, lim_y = max(0, (w - cw) / 2), max(0, (h - ch) / 2)
+        self.panx = max(-lim_x, min(lim_x, self.panx))
+        self.pany = max(-lim_y, min(lim_y, self.pany))
+        self.ox, self.oy = int((cw - w) / 2 + self.panx), int((ch - h) / 2 + self.pany)
         self.anim.stop()
-        self.photo = ImageTk.PhotoImage(src.resize((w, h), Image.LANCZOS))
+        if self.zoom <= 1.0001:
+            img, px, py = src.resize((w, h), Image.LANCZOS), self.ox, self.oy
+        else:
+            # zoomed in: only resample the part that is actually on screen
+            x0, y0 = max(0, -self.ox), max(0, -self.oy)
+            x1, y1 = min(w, cw - self.ox), min(h, ch - self.oy)
+            sx0, sy0 = int(x0 / self.scale), int(y0 / self.scale)
+            sx1 = min(src.width, int(math.ceil(x1 / self.scale)))
+            sy1 = min(src.height, int(math.ceil(y1 / self.scale)))
+            crop = src.crop((sx0, sy0, max(sx1, sx0 + 1), max(sy1, sy0 + 1)))
+            tw = max(1, round(crop.width * self.scale))
+            th = max(1, round(crop.height * self.scale))
+            img = crop.resize((tw, th), Image.BICUBIC)
+            px, py = self.ox + round(sx0 * self.scale), self.oy + round(sy0 * self.scale)
+        self.photo = ImageTk.PhotoImage(img)
         self.hide_hover()
         self.canvas.delete("all")
-        self.canvas.create_image(self.ox, self.oy, anchor="nw", image=self.photo)
-        if self.done == 0:
+        self.canvas.create_image(px, py, anchor="nw", image=self.photo)
+        if self.done == 0 and self.zoom <= 1.0001:
             self.draw_hint(cw, ch)
         self.anim.start()
+
+    # ---------- zoom and pan ----------
+    def on_wheel(self, e):
+        if self.preview_src is None:
+            return
+        d = getattr(e, "delta", 0)
+        if getattr(e, "num", 0) == 4:
+            d = 120
+        elif getattr(e, "num", 0) == 5:
+            d = -120
+        if not d:
+            return
+        steps = max(1, abs(int(d)) // 120)
+        self.zoom_at(e.x, e.y, (1.2 ** steps) if d > 0 else (1 / 1.2 ** steps))
+
+    def zoom_at(self, mx, my, factor):
+        """Zoom by `factor`, keeping the point under (mx, my) where it is."""
+        if self.preview_src is None or self.scale <= 0:
+            return
+        newz = max(1.0, min(12.0, self.zoom * factor))
+        if abs(newz - self.zoom) < 1e-6:
+            return
+        cw, ch = self.canvas.winfo_width(), self.canvas.winfo_height()
+        src = self.preview_src
+        sx, sy = (mx - self.ox) / self.scale, (my - self.oy) / self.scale
+        s = min(cw / src.width, ch / src.height) * newz
+        w, h = src.width * s, src.height * s
+        self.zoom = newz
+        if newz <= 1.0001:
+            self.panx = self.pany = 0
+        else:
+            self.panx = mx - sx * s - (cw - w) / 2
+            self.pany = my - sy * s - (ch - h) / 2
+        if self._resize_job:
+            self.root.after_cancel(self._resize_job)
+        self.draw_preview()
+        self.status_var.set("Zoom %d%%  ·  drag to pan  ·  press 0 to fit the whole chart" % round(newz * 100)
+                            if newz > 1.0001 else self.default_status)
+
+    def reset_zoom(self, _e=None):
+        if self.zoom != 1.0 or self.panx or self.pany:
+            self.zoom, self.panx, self.pany = 1.0, 0, 0
+            self.draw_preview()
+            self.status_var.set(self.default_status)
+
+    def key_zoom(self, factor):
+        self.zoom_at(self.canvas.winfo_width() / 2, self.canvas.winfo_height() / 2, factor)
+
+    def on_press(self, e):
+        self._drag = {"x": e.x, "y": e.y, "px": self.panx, "py": self.pany, "moved": False}
+
+    def on_drag(self, e):
+        d = self._drag
+        if not d:
+            return
+        dx, dy = e.x - d["x"], e.y - d["y"]
+        if not d["moved"] and abs(dx) < 5 and abs(dy) < 5:
+            return
+        d["moved"] = True
+        if self.zoom <= 1.0001:
+            return
+        self.panx, self.pany = d["px"] + dx, d["py"] + dy
+        self.canvas.config(cursor="fleur")
+        if not self._pan_job:
+            self._pan_job = self.root.after(15, self._pan_redraw)
+
+    def _pan_redraw(self):
+        self._pan_job = None
+        self.draw_preview()
+
+    def on_release(self, e):
+        d, self._drag = self._drag, None
+        self.canvas.config(cursor="")
+        if d and not d["moved"]:
+            self.on_click(e)
 
     def draw_hint(self, cw, ch):
         """Big friendly hint over an empty chart."""
@@ -1935,6 +2275,112 @@ class App:
         self._log_win = win
 
     # ---------- other actions ----------
+    # ---------- companion checklist ----------
+    def choice_dialog(self, title, message, buttons):
+        """Small modal dialog. buttons = [(key, label, primary)]. Returns the chosen key or None."""
+        win = tk.Toplevel(self.root)
+        win.title(title)
+        win.configure(bg="white")
+        win.resizable(False, False)
+        win.transient(self.root)
+        result = {"k": None}
+        tk.Label(win, text=title, bg="white", fg="#111", font=("TkDefaultFont", 14, "bold")).pack(padx=26, pady=(22, 6))
+        tk.Label(win, text=message, bg="white", fg="#444", justify="left", wraplength=420).pack(padx=26, pady=(0, 14))
+        row = tk.Frame(win, bg="white")
+        row.pack(pady=(0, 20))
+
+        def pick(k):
+            result["k"] = k
+            win.destroy()
+
+        for key, label, primary in buttons:
+            Btn(row, text=label, command=lambda k=key: pick(k), relief="flat", bd=0, padx=14, pady=6,
+                bg="#1f4f7a" if primary else "#e6e6ec", fg="white" if primary else "#111",
+                activebackground="#2b6aa3" if primary else "#d6d6de",
+                activeforeground="white" if primary else "#111",
+                font=("TkDefaultFont", 10, "bold")).pack(side="left", padx=5)
+        win.bind("<Escape>", lambda e: win.destroy())
+        win.update_idletasks()
+        x = self.root.winfo_rootx() + (self.root.winfo_width() - win.winfo_width()) // 2
+        y = self.root.winfo_rooty() + (self.root.winfo_height() - win.winfo_height()) // 3
+        win.geometry(f"+{max(0, x)}+{max(0, y)}")
+        win.grab_set()
+        self.root.wait_window(win)
+        return result["k"]
+
+    def update_checklist(self):
+        squares = filled()
+        ids = getattr(CAT, "IDS", None)
+        have = {(ids[n] if ids else n) for n in squares}
+        TOTAL = COUNT
+        if not have:
+            messagebox.showinfo("Update my checklist",
+                                "There are no photos on your chart yet.\n\nAdd some photos first, then "
+                                "come back and press this button to tick them off in your checklist.",
+                                parent=self.root)
+            return
+        found = find_checklists()
+        pdf = None
+        if found:
+            pick = found[0]
+            k = self.choice_dialog(
+                "Found your checklist",
+                f"{pick.name}\nin {pick.parent}\n\nTick off the {len(squares)} object{'s' if len(squares) != 1 else ''} "
+                "that have a photo on your chart? Anything you have already ticked stays ticked.",
+                [("go", "Update this checklist", True), ("browse", "Choose a different file…", False),
+                 ("cancel", "Cancel", False)])
+            if k == "go":
+                pdf = pick
+            elif k != "browse":
+                return
+        else:
+            k = self.choice_dialog(
+                "Checklist not found",
+                "I couldn't find the " + CHECKLIST["label"] + " on this computer.\n\n"
+                "It's the companion to this chart builder: it keeps a log for all " + str(TOTAL) + " objects, and this button "
+                "ticks off every object you have photographed.\n\n"
+                "Already have it? Browse for it. Don't have it yet? You can get it from the SaltyPogue shop.",
+                [("browse", "I have it: browse…", False), ("get", "Get the checklist", True),
+                 ("cancel", "Cancel", False)])
+            if k == "get":
+                webbrowser.open(CHECKLIST_URL)
+                return
+            if k != "browse":
+                return
+        if pdf is None:
+            f = filedialog.askopenfilename(title="Choose your " + CHECKLIST["label"] + " (PDF)",
+                                           filetypes=[("PDF", "*.pdf"), ("All files", "*.*")], parent=self.root)
+            if not f:
+                return
+            pdf = Path(f)
+        try:
+            backup = pdf.with_name(f"{pdf.stem} (before update){pdf.suffix}")
+            if not backup.exists():
+                shutil.copy2(pdf, backup)
+            self.status_var.set("Updating your checklist…")
+            self.root.update_idletasks()
+            newly, total, _boxes = update_checklist_pdf(pdf, have)
+        except ImportError:
+            messagebox.showerror("Update my checklist", "This copy of the app is missing its PDF component. "
+                                 "Please download the latest version.", parent=self.root)
+            return
+        except PermissionError:
+            messagebox.showerror("Update my checklist", "The checklist is open in another program, so it can't be saved.\n\n"
+                                 "Close it in your PDF viewer and press the button again.", parent=self.root)
+            return
+        except ValueError as ex:
+            messagebox.showerror("Update my checklist", str(ex), parent=self.root)
+            return
+        except Exception as ex:
+            messagebox.showerror("Update my checklist", f"Couldn't update the checklist.\n\n{ex}", parent=self.root)
+            return
+        self.status_var.set(f"Checklist updated: {newly} newly ticked, {total} / {TOTAL} marked in total.")
+        msg = (f"Done! {newly} object{'s' if newly != 1 else ''} newly ticked.\n\n{total} of {TOTAL} are now marked "
+               "as observed in your checklist.\n\nOpen it now?" if newly else
+               f"Your checklist is already up to date ({total} of {TOTAL} marked).\n\nOpen it now?")
+        if messagebox.askyesno("Checklist updated", msg, parent=self.root):
+            open_path(pdf)
+
     def clear_all(self):
         have = filled()
         if not have:

@@ -19,6 +19,8 @@ CELL_W, CELL_H = 256, 208
 START_MAXIMIZED = True
 EXAMPLES = ['vdB 139.jpg', 'NGC 7023.jpg', 'Iris.jpg']          # example file names shown in the help
 SPARE_LINES = [('van den Bergh', 'title', 48, (120, 120, 140)), ('158 reflection nebulae', 'sans', 26, (95, 95, 115))]           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'vdb', 'word': 'vdB', 'label': 'vdB Checklist', 'cb': 'cb_', 'mode': 'direct'}
 DESCRIPTION = ('The van den Bergh Catalogue: 158 reflection nebulae - clouds of dust lit by nearby stars, glowing blue or golden - catalogued by the Canadian astronomer Sidney van den Bergh in 1966 from the plates of the Palomar Observatory Sky Survey.')
 
 # van den Bergh catalogue of reflection nebulae (1966): vdB 1 to vdB 158.

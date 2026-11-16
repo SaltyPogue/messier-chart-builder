@@ -45,7 +45,7 @@ Not sure which you have? Apple menu  → **About This Mac** → look at **Chip**
 
 You only need to do this once per app.
 
-## Using the apps (Version 1.2)
+## Using the apps (Version 1.4)
 
 The first time an app opens, a short welcome guide explains the basics. You can open it again any time with **Help**.
 
@@ -64,6 +64,8 @@ The first time an app opens, a short welcome guide explains the basics. You can 
   - **Open original** or **Remove photo**.
 - **Undo** (or Ctrl+Z / Cmd+Z) puts back a photo you removed, replaced or changed the framing of, or everything after **Clear all**.
 - **Missing list** shows what's still to photograph. Click an object to find it on the chart, double-click to choose a photo for it, and **Save checklist…** as a text file or a spreadsheet (CSV).
+- **Update my checklist…** ticks off every object you've photographed in your SaltyPogue checklist PDF ([SaltyPogue shop](https://saltypogue.etsy.com)). It finds the PDF in your Downloads, Documents or Desktop folder, keeps a backup copy the first time, and never unticks anything.
+- **Scroll the mouse wheel** over the chart to zoom in, drag to move around, and press 0 to see the whole chart again.
 - **Rest the mouse on a photo** to see a larger preview.
 - **Export chart…** saves a PNG, JPG or TIFF. Each chart is also saved automatically in its own folder in your home folder (`Messier Chart`, `Caldwell Chart`, `Sharpless Chart`, `Herschel Chart`, `Barnard Chart`, `Abell Chart`, `vdB Chart`).
 - **Edit title…**, **Library folder**, **Clear all…** and **Star border: On/Off** are in the toolbar.

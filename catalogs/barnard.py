@@ -19,6 +19,8 @@ CELL_W, CELL_H = 256, 208
 START_MAXIMIZED = True
 EXAMPLES = ['B33.jpg', 'Barnard 72.png', 'Horsehead.jpg']          # example file names shown in the help
 SPARE_LINES = [('Barnard Catalog', 'title', 54, (120, 120, 140)), ('345 dark nebulae  ·  B1-B175 and B201-B370', 'sans', 28, (95, 95, 115)), ('(numbers 176-200 were never used)', 'sans', 22, (80, 80, 98))]           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'barnard', 'word': 'Barnard', 'label': 'Barnard Checklist', 'cb': 'cb_', 'mode': 'bykey'}
 DESCRIPTION = ('The Barnard Catalogue: dark nebulae - clouds of dust seen in silhouette against the Milky Way - photographed by the American astronomer Edward Emerson Barnard. His 1927 catalogue numbers them B1 to B175 and B201 to B370.')
 
 # Barnard's dark nebulae (1927 catalogue). Numbers run 1-175 and 201-370;

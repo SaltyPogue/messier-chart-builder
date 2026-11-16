@@ -19,6 +19,8 @@ CELL_W, CELL_H = 320, 260
 START_MAXIMIZED = False
 EXAMPLES = ['M31.jpg', 'Messier 81.png', 'Andromeda Galaxy.jpg']          # example file names shown in the help
 SPARE_LINES = []           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'messier', 'word': 'Messier', 'label': 'Messier Checklist', 'cb': 'cb_M', 'mode': 'direct'}
 DESCRIPTION = ('The Messier Catalogue: 110 nebulae, star clusters and galaxies compiled by the French astronomer Charles Messier between 1771 and 1781, so that comet hunters would not mistake them for comets. M104 to M110 were added from his notes by later astronomers.')
 
 NAMES = {

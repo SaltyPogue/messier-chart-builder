@@ -19,6 +19,8 @@ CELL_W, CELL_H = 320, 260
 START_MAXIMIZED = True
 EXAMPLES = ['Abell 21.jpg', 'A39.png', 'NGC 6742.jpg']          # example file names shown in the help
 SPARE_LINES = [('Abell Catalog', 'title', 54, (120, 120, 140)), ('86 planetary nebulae  ·  Abell 1 to Abell 86', 'sans', 28, (95, 95, 115))]           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'abell', 'word': 'Abell', 'label': 'Abell Checklist', 'cb': 'cb_', 'mode': 'bykey'}
 DESCRIPTION = ('The Abell Catalog of Planetary Nebulae: 86 faint planetary nebulae found by George Abell on the Palomar Observatory Sky Survey plates and published in 1966. Later study showed that four of them (Abell 11, 32, 76 and 85) are not planetary nebulae.')
 
 # Abell Catalog of Planetary Nebulae (1966): Abell 1 to Abell 86.

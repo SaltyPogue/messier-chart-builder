@@ -19,6 +19,8 @@ CELL_W, CELL_H = 256, 208
 START_MAXIMIZED = True
 EXAMPLES = ['Sh2-155.jpg', 'NGC 7000.jpg', 'Heart Nebula.jpg']          # example file names shown in the help
 SPARE_LINES = [('Sharpless Catalog', 'title', 54, (120, 120, 140)), ('313 nebulae  ·  Sh2-1 to Sh2-313', 'sans', 28, (95, 95, 115))]           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'sharpless', 'word': 'Sharpless', 'label': 'Sharpless Checklist', 'cb': 'cb_', 'mode': 'direct'}
 DESCRIPTION = ('The Sharpless Catalogue: 313 H II regions - glowing clouds of hydrogen gas - catalogued by the American astronomer Stewart Sharpless in 1959 from the photographic plates of the Palomar Observatory Sky Survey.')
 
 # Sharpless (Sh2) catalog: common names for the better-known objects.

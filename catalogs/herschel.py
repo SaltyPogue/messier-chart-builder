@@ -19,6 +19,8 @@ CELL_W, CELL_H = 256, 208
 START_MAXIMIZED = True
 EXAMPLES = ['NGC 891.jpg', 'ngc7814.png', 'M33.jpg']          # example file names shown in the help
 SPARE_LINES = []           # text in the unused squares after the last object
+# Companion checklist PDF (sold on Etsy) that the "Update my checklist" button ticks off
+CHECKLIST = {'file': 'herschel', 'word': 'Herschel', 'label': 'Herschel Checklist', 'cb': 'cb_', 'mode': 'bykey'}
 DESCRIPTION = ('The Herschel Catalog: 400 deep-sky objects chosen in 1980 by members of the Ancient City Astronomy Club from the roughly 2,500 discovered by William and Caroline Herschel. The Astronomical League adopted it as its Herschel 400 observing challenge, the next step after the Messier list.')
 
 # Herschel 400 (Astronomical League list), in NGC order: (NGC number, type, common name)
